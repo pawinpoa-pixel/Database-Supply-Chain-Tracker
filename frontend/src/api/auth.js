@@ -2,6 +2,12 @@ import axios from 'axios'
 
 const api = axios.create({ baseURL: '/api' })
 
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token')
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
+
 export async function login(username, password) {
   const { data } = await api.post('/auth/login', { username, password })
   localStorage.setItem('token', data.access_token)
@@ -10,6 +16,14 @@ export async function login(username, password) {
 
 export async function register(username, email, password) {
   const { data } = await api.post('/auth/register', { username, email, password })
+  return data
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  const { data } = await api.put('/auth/change-password', {
+    current_password: currentPassword,
+    new_password: newPassword,
+  })
   return data
 }
 
