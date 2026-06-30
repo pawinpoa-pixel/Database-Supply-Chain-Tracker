@@ -16,8 +16,8 @@
           <a href="#how-it-works">How it works</a>
         </div>
         <div class="nav-actions">
-          <router-link to="/login" class="btn-ghost">Sign In</router-link>
-          <router-link to="/register" class="btn-primary">Get Started</router-link>
+          <button class="btn-ghost" @click="openModal('login')">Sign In</button>
+          <button class="btn-primary" @click="openModal('register')">Get Started</button>
         </div>
       </div>
     </nav>
@@ -33,7 +33,7 @@
             from suppliers to warehouses to final delivery — all in one place.
           </p>
           <div class="hero-ctas">
-            <router-link to="/register" class="btn-primary large">Get Started Free</router-link>
+            <button class="btn-primary large" @click="openModal('register')">Get Started Free</button>
             <a href="#features" class="btn-outline large">See Features</a>
           </div>
         </div>
@@ -204,7 +204,7 @@
       <div class="section-inner center">
         <h2>Ready to take control of your supply chain?</h2>
         <p>Join teams that rely on SupplyTrack to keep their operations running smoothly.</p>
-        <router-link to="/register" class="btn-primary large">Get Started Free</router-link>
+        <button class="btn-primary large" @click="openModal('register')">Get Started Free</button>
       </div>
     </section>
 
@@ -222,10 +222,149 @@
       </div>
     </footer>
 
+    <!-- Modal Overlay -->
+    <Transition name="fade">
+      <div v-if="activeModal" class="overlay" @click.self="closeModal">
+        <Transition name="slide-up">
+          <div v-if="activeModal" class="modal">
+
+            <!-- Close button -->
+            <button class="modal-close" @click="closeModal" aria-label="Close">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+
+            <!-- Logo -->
+            <div class="modal-logo">
+              <svg width="32" height="32" viewBox="0 0 28 28" fill="none">
+                <rect width="28" height="28" rx="8" fill="#4361ee"/>
+                <path d="M7 10h14M7 14h10M7 18h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              SupplyTrack
+            </div>
+
+            <!-- LOGIN FORM -->
+            <template v-if="activeModal === 'login'">
+              <h2>Welcome back</h2>
+              <p class="modal-sub">Sign in to your account</p>
+              <form @submit.prevent="handleLogin">
+                <div class="field">
+                  <label>Username</label>
+                  <input v-model="loginForm.username" type="text" placeholder="Enter username" required />
+                </div>
+                <div class="field">
+                  <label>Password</label>
+                  <input v-model="loginForm.password" type="password" placeholder="Enter password" required />
+                </div>
+                <p v-if="formError" class="form-error">{{ formError }}</p>
+                <button type="submit" class="btn-submit" :disabled="loading">
+                  {{ loading ? 'Signing in…' : 'Sign In' }}
+                </button>
+              </form>
+              <p class="modal-switch">
+                Don't have an account?
+                <button class="link-btn" @click="switchModal('register')">Register</button>
+              </p>
+            </template>
+
+            <!-- REGISTER FORM -->
+            <template v-else-if="activeModal === 'register'">
+              <h2>Create account</h2>
+              <p class="modal-sub">Get started for free</p>
+              <form @submit.prevent="handleRegister">
+                <div class="field">
+                  <label>Username</label>
+                  <input v-model="registerForm.username" type="text" placeholder="Choose a username" required />
+                </div>
+                <div class="field">
+                  <label>Email</label>
+                  <input v-model="registerForm.email" type="email" placeholder="Enter your email" required />
+                </div>
+                <div class="field">
+                  <label>Password</label>
+                  <input v-model="registerForm.password" type="password" placeholder="Create a password" required />
+                </div>
+                <p v-if="formError" class="form-error">{{ formError }}</p>
+                <p v-if="formSuccess" class="form-success">{{ formSuccess }}</p>
+                <button type="submit" class="btn-submit" :disabled="loading">
+                  {{ loading ? 'Registering…' : 'Create Account' }}
+                </button>
+              </form>
+              <p class="modal-switch">
+                Already have an account?
+                <button class="link-btn" @click="switchModal('login')">Sign In</button>
+              </p>
+            </template>
+
+          </div>
+        </Transition>
+      </div>
+    </Transition>
+
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { login, register } from '../api/auth'
+
+const router = useRouter()
+
+const activeModal = ref(null)
+const loading = ref(false)
+const formError = ref('')
+const formSuccess = ref('')
+
+const loginForm = ref({ username: '', password: '' })
+const registerForm = ref({ username: '', email: '', password: '' })
+
+function openModal(type) {
+  activeModal.value = type
+  formError.value = ''
+  formSuccess.value = ''
+}
+
+function closeModal() {
+  activeModal.value = null
+  formError.value = ''
+  formSuccess.value = ''
+}
+
+function switchModal(type) {
+  formError.value = ''
+  formSuccess.value = ''
+  activeModal.value = type
+}
+
+async function handleLogin() {
+  formError.value = ''
+  loading.value = true
+  try {
+    await login(loginForm.value.username, loginForm.value.password)
+    router.push('/dashboard')
+  } catch (err) {
+    formError.value = err.response?.data?.detail || 'Login failed. Please try again.'
+  } finally {
+    loading.value = false
+  }
+}
+
+async function handleRegister() {
+  formError.value = ''
+  formSuccess.value = ''
+  loading.value = true
+  try {
+    await register(registerForm.value.username, registerForm.value.email, registerForm.value.password)
+    formSuccess.value = 'Account created! Switching to sign in…'
+    setTimeout(() => switchModal('login'), 1400)
+  } catch (err) {
+    formError.value = err.response?.data?.detail || 'Registration failed. Please try again.'
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -286,13 +425,16 @@
 
 /* ── Buttons ── */
 .btn-ghost {
-  text-decoration: none;
+  background: none;
+  border: none;
   padding: 0.45rem 1rem;
   font-size: 0.9rem;
   font-weight: 600;
   color: #333;
   border-radius: 8px;
+  cursor: pointer;
   transition: background 0.15s;
+  font-family: inherit;
 }
 .btn-ghost:hover { background: #f4f4f8; }
 
@@ -308,6 +450,7 @@
   cursor: pointer;
   transition: background 0.2s, transform 0.1s;
   display: inline-block;
+  font-family: inherit;
 }
 .btn-primary:hover { background: #3451d1; transform: translateY(-1px); }
 .btn-primary.large { padding: 0.75rem 1.75rem; font-size: 1rem; border-radius: 10px; }
@@ -397,23 +540,12 @@
   align-items: center;
   gap: 0.4rem;
 }
-.dot {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-}
+.dot { width: 10px; height: 10px; border-radius: 50%; }
 .dot.red    { background: #ff5f57; }
 .dot.yellow { background: #ffbd2e; }
 .dot.green  { background: #28c840; }
-.mockup-title {
-  margin-left: 0.5rem;
-  font-size: 0.72rem;
-  color: #888;
-  font-weight: 500;
-}
-.mockup-body {
-  display: flex;
-  height: 320px;
-}
+.mockup-title { margin-left: 0.5rem; font-size: 0.72rem; color: #888; font-weight: 500; }
+.mockup-body { display: flex; height: 320px; }
 .mock-sidebar {
   width: 110px;
   background: #f9fafb;
@@ -421,124 +553,38 @@
   padding: 0.75rem 0;
   flex-shrink: 0;
 }
-.mock-nav-item {
-  padding: 0.45rem 0.85rem;
-  font-size: 0.72rem;
-  color: #888;
-  border-radius: 6px;
-  margin: 2px 6px;
-  cursor: default;
-}
-.mock-nav-item.active {
-  background: #eef0fc;
-  color: #4361ee;
-  font-weight: 600;
-}
-.mock-content {
-  flex: 1;
-  padding: 0.75rem 1rem;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-.mock-stats {
-  display: flex;
-  gap: 0.5rem;
-}
-.mock-stat {
-  flex: 1;
-  background: #f5f7ff;
-  border-radius: 8px;
-  padding: 0.5rem 0.65rem;
-  border: 1px solid #e8ecff;
-}
+.mock-nav-item { padding: 0.45rem 0.85rem; font-size: 0.72rem; color: #888; border-radius: 6px; margin: 2px 6px; cursor: default; }
+.mock-nav-item.active { background: #eef0fc; color: #4361ee; font-weight: 600; }
+.mock-content { flex: 1; padding: 0.75rem 1rem; overflow: hidden; display: flex; flex-direction: column; gap: 0.65rem; }
+.mock-stats { display: flex; gap: 0.5rem; }
+.mock-stat { flex: 1; background: #f5f7ff; border-radius: 8px; padding: 0.5rem 0.65rem; border: 1px solid #e8ecff; }
 .mock-stat-label { font-size: 0.62rem; color: #888; }
 .mock-stat-value { font-size: 1rem; font-weight: 700; color: #1a1a2e; margin: 2px 0; }
 .mock-stat-delta { font-size: 0.6rem; font-weight: 600; }
 .mock-stat-delta.positive { color: #2a9d8f; }
 .mock-stat-delta.negative { color: #e63946; }
-
 .mock-chart { background: #f9fafb; border-radius: 8px; padding: 0.5rem 0.65rem; border: 1px solid #eee; }
 .mock-chart-label { font-size: 0.62rem; color: #888; margin-bottom: 0.4rem; }
-.mock-bars {
-  display: flex;
-  align-items: flex-end;
-  gap: 4px;
-  height: 50px;
-}
-.mock-bar {
-  flex: 1;
-  background: #d0d8f8;
-  border-radius: 3px 3px 0 0;
-}
+.mock-bars { display: flex; align-items: flex-end; gap: 4px; height: 50px; }
+.mock-bar { flex: 1; background: #d0d8f8; border-radius: 3px 3px 0 0; }
 .mock-bar.highlight { background: #4361ee; }
-
 .mock-table { font-size: 0.65rem; }
-.mock-row {
-  display: flex;
-  gap: 0.5rem;
-  padding: 0.3rem 0;
-  border-bottom: 1px solid #f0f0f0;
-  align-items: center;
-}
+.mock-row { display: flex; gap: 0.5rem; padding: 0.3rem 0; border-bottom: 1px solid #f0f0f0; align-items: center; }
 .mock-row.header { color: #aaa; font-weight: 600; }
 .mock-row span { flex: 1; color: #444; }
-.pill {
-  font-size: 0.58rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 100px;
-}
+.pill { font-size: 0.58rem; font-weight: 700; padding: 2px 6px; border-radius: 100px; }
 .pill.delivered { background: #d4f7f0; color: #2a9d8f; }
 .pill.transit   { background: #e8ecff; color: #4361ee; }
 .pill.pending   { background: #fff3cd; color: #b97800; }
 
 /* ── Sections ── */
-.section-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 5rem 2rem;
-}
-.section-label {
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #4361ee;
-  margin-bottom: 0.75rem;
-}
-.features h2,
-.how-it-works h2,
-.cta-banner h2 {
-  font-size: 2rem;
-  font-weight: 800;
-  margin: 0 0 2.5rem;
-}
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.25rem;
-}
-.feature-card {
-  padding: 1.75rem;
-  border: 1px solid #eaecf4;
-  border-radius: 14px;
-  transition: box-shadow 0.2s, transform 0.2s;
-}
-.feature-card:hover {
-  box-shadow: 0 8px 24px rgba(67,97,238,0.1);
-  transform: translateY(-2px);
-}
-.feature-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
-}
+.section-inner { max-width: 1200px; margin: 0 auto; padding: 5rem 2rem; }
+.section-label { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #4361ee; margin-bottom: 0.75rem; }
+.features h2, .how-it-works h2, .cta-banner h2 { font-size: 2rem; font-weight: 800; margin: 0 0 2.5rem; }
+.feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+.feature-card { padding: 1.75rem; border: 1px solid #eaecf4; border-radius: 14px; transition: box-shadow 0.2s, transform 0.2s; }
+.feature-card:hover { box-shadow: 0 8px 24px rgba(67,97,238,0.1); transform: translateY(-2px); }
+.feature-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
 .feature-icon.blue   { background: #e8ecff; color: #4361ee; }
 .feature-icon.teal   { background: #d4f7f0; color: #2a9d8f; }
 .feature-icon.indigo { background: #ede9ff; color: #7c3aed; }
@@ -550,59 +596,149 @@
 
 /* ── How it works ── */
 .how-it-works { background: #f5f7ff; }
-.steps {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-}
-.step {
-  flex: 1;
-  background: #fff;
-  border-radius: 14px;
-  padding: 1.75rem;
-  border: 1px solid #eaecf4;
-}
-.step-arrow {
-  font-size: 1.5rem;
-  color: #c0c8e8;
-  padding-top: 1.75rem;
-  flex-shrink: 0;
-}
-.step-num {
-  font-size: 2rem;
-  font-weight: 800;
-  color: #e8ecff;
-  margin-bottom: 0.75rem;
-  line-height: 1;
-}
+.steps { display: flex; align-items: flex-start; gap: 1rem; }
+.step { flex: 1; background: #fff; border-radius: 14px; padding: 1.75rem; border: 1px solid #eaecf4; }
+.step-arrow { font-size: 1.5rem; color: #c0c8e8; padding-top: 1.75rem; flex-shrink: 0; }
+.step-num { font-size: 2rem; font-weight: 800; color: #e8ecff; margin-bottom: 0.75rem; line-height: 1; }
 .step h3 { font-size: 1rem; font-weight: 700; margin: 0 0 0.5rem; }
 .step p  { font-size: 0.88rem; color: #666; line-height: 1.65; margin: 0; }
 
 /* ── CTA Banner ── */
-.cta-banner {
-  background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
-  color: #fff;
-}
+.cta-banner { background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%); color: #fff; }
 .cta-banner .section-inner.center { text-align: center; }
 .cta-banner h2 { color: #fff; margin-bottom: 0.75rem; }
 .cta-banner p  { color: rgba(255,255,255,0.8); font-size: 1rem; margin-bottom: 2rem; }
-.cta-banner .btn-primary {
-  background: #fff;
-  color: #4361ee;
-}
-.cta-banner .btn-primary:hover { background: #eef0fc; }
+.cta-banner .btn-primary { background: #fff; color: #4361ee; }
+.cta-banner .btn-primary:hover { background: #eef0fc; transform: none; }
 
 /* ── Footer ── */
-.footer {
-  border-top: 1px solid #eee;
-  padding: 1.5rem 2rem;
-}
-.footer-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+.footer { border-top: 1px solid #eee; padding: 1.5rem 2rem; }
+.footer-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
 .footer-copy { font-size: 0.82rem; color: #aaa; }
+
+/* ── Modal Overlay ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 15, 30, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 20px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+}
+
+.modal-close {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.1rem;
+  background: #f4f4f8;
+  border: none;
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #666;
+  transition: background 0.15s, color 0.15s;
+}
+.modal-close:hover { background: #e8e8f0; color: #1a1a2e; }
+
+.modal-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #1a1a2e;
+  margin-bottom: 1.5rem;
+}
+
+.modal h2 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin: 0 0 0.25rem;
+}
+.modal-sub {
+  font-size: 0.88rem;
+  color: #888;
+  margin-bottom: 1.5rem;
+}
+
+.field { margin-bottom: 1rem; }
+label { display: block; font-size: 0.82rem; font-weight: 600; color: #444; margin-bottom: 0.4rem; }
+input {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #ddd;
+  border-radius: 9px;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+input:focus { border-color: #4361ee; box-shadow: 0 0 0 3px rgba(67,97,238,0.12); }
+
+.btn-submit {
+  width: 100%;
+  padding: 0.78rem;
+  background: #4361ee;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  font-family: inherit;
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-submit:hover:not(:disabled) { background: #3451d1; transform: translateY(-1px); }
+.btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.form-error   { color: #e63946; font-size: 0.82rem; margin: 0.4rem 0; }
+.form-success { color: #2a9d8f; font-size: 0.82rem; margin: 0.4rem 0; }
+
+.modal-switch {
+  text-align: center;
+  margin-top: 1.25rem;
+  font-size: 0.88rem;
+  color: #888;
+}
+.link-btn {
+  background: none;
+  border: none;
+  color: #4361ee;
+  font-weight: 700;
+  font-size: inherit;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+.link-btn:hover { text-decoration: underline; }
+
+/* ── Transitions ── */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.25s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.slide-up-enter-active { transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.22s ease; }
+.slide-up-leave-active { transition: transform 0.2s ease, opacity 0.2s ease; }
+.slide-up-enter-from  { transform: translateY(24px) scale(0.97); opacity: 0; }
+.slide-up-leave-to    { transform: translateY(12px) scale(0.97); opacity: 0; }
 </style>
