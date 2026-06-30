@@ -9,7 +9,7 @@
             <rect width="28" height="28" rx="8" fill="#4361ee"/>
             <path d="M7 10h14M7 14h10M7 18h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          SupplyTrack
+          Boonya-Need-it
         </span>
         <div class="nav-links">
           <a href="#features">Features</a>
@@ -29,7 +29,7 @@
           <div class="badge">Supply Chain Management</div>
           <h1>Track every step.<br /><span class="accent">Deliver with confidence.</span></h1>
           <p class="hero-sub">
-            SupplyTrack gives you real-time visibility into your supply chain —
+            Boonya-Need-it gives you real-time visibility into your supply chain —
             from suppliers to warehouses to final delivery — all in one place.
           </p>
           <div class="hero-ctas">
@@ -203,7 +203,7 @@
     <section class="cta-banner">
       <div class="section-inner center">
         <h2>Ready to take control of your supply chain?</h2>
-        <p>Join teams that rely on SupplyTrack to keep their operations running smoothly.</p>
+        <p>Join teams that rely on Boonya-Need-it to keep their operations running smoothly.</p>
         <button class="btn-primary large" @click="openModal('register')">Get Started Free</button>
       </div>
     </section>
@@ -216,9 +216,9 @@
             <rect width="28" height="28" rx="8" fill="#4361ee"/>
             <path d="M7 10h14M7 14h10M7 18h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
           </svg>
-          SupplyTrack
+          Boonya-Need-it
         </span>
-        <span class="footer-copy">© 2026 SupplyTrack. ICCS225 Database Project.</span>
+        <span class="footer-copy">© 2026 Boonya-Need-it. ICCS225 Database Project.</span>
       </div>
     </footer>
 
@@ -241,7 +241,7 @@
                 <rect width="28" height="28" rx="8" fill="#4361ee"/>
                 <path d="M7 10h14M7 14h10M7 18h12" stroke="white" stroke-width="2" stroke-linecap="round"/>
               </svg>
-              SupplyTrack
+              Boonya-Need-it
             </div>
 
             <!-- LOGIN FORM -->
