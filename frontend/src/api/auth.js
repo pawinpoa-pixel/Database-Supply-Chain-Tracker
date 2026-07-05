@@ -1,12 +1,4 @@
-import axios from 'axios'
-
-const api = axios.create({ baseURL: '/api' })
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
-})
+import { api } from './client'
 
 export async function login(username, password) {
   const { data } = await api.post('/auth/login', { username, password })
