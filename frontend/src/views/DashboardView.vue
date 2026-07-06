@@ -2,7 +2,10 @@
   <div class="dashboard">
     <header>
       <h1>Supply Chain Tracker</h1>
-      <button class="btn-logout" @click="handleLogout">Logout</button>
+      <div class="header-actions">
+        <DarkModeToggle />
+        <button class="btn-logout" @click="handleLogout">Logout</button>
+      </div>
     </header>
 
     <nav class="tabs">
@@ -121,6 +124,7 @@ import InventoryPanel from '../components/InventoryPanel.vue'
 import PurchaseOrdersPanel from '../components/PurchaseOrdersPanel.vue'
 import OrdersPanel from '../components/OrdersPanel.vue'
 import ShipmentsPanel from '../components/ShipmentsPanel.vue'
+import DarkModeToggle from '../components/DarkModeToggle.vue'
 
 const router = useRouter()
 
@@ -227,7 +231,7 @@ async function handleChangePassword() {
 <style scoped>
 .dashboard {
   min-height: 100vh;
-  background: #f0f2f5;
+  background: var(--color-bg-alt);
   font-family: sans-serif;
 }
 
@@ -235,20 +239,26 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: white;
+  background: var(--color-surface);
   padding: 1rem 2rem;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
 header h1 {
   font-size: 1.3rem;
-  color: #1a1a2e;
+  color: var(--color-text);
   margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .btn-logout {
   padding: 0.45rem 1rem;
-  background: #e63946;
+  background: var(--color-danger);
   color: white;
   border: none;
   border-radius: 8px;
@@ -258,7 +268,7 @@ header h1 {
 }
 
 .btn-logout:hover {
-  background: #c1121f;
+  background: var(--color-danger-hover);
 }
 
 .tabs {
@@ -276,12 +286,12 @@ header h1 {
   cursor: pointer;
   font-weight: 600;
   font-size: 0.9rem;
-  color: #555;
+  color: var(--color-text-muted);
 }
 
 .tabs button.active {
-  background: white;
-  color: #4361ee;
+  background: var(--color-surface);
+  color: var(--color-primary);
 }
 
 main {
@@ -296,16 +306,16 @@ main {
 }
 
 .card {
-  background: white;
+  background: var(--color-surface);
   padding: 2rem;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
   max-width: 480px;
 }
 
 h2 {
   font-size: 1.4rem;
-  color: #1a1a2e;
+  color: var(--color-text);
   margin-bottom: 1.5rem;
 }
 
@@ -317,29 +327,31 @@ label {
   display: block;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #444;
+  color: var(--color-text);
   margin-bottom: 0.4rem;
 }
 
 input {
   width: 100%;
   padding: 0.65rem 0.85rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   font-size: 0.95rem;
   box-sizing: border-box;
+  background: var(--color-surface);
+  color: var(--color-text);
   transition: border-color 0.2s;
 }
 
 input:focus {
   outline: none;
-  border-color: #4361ee;
+  border-color: var(--color-primary);
 }
 
 button[type='submit'] {
   width: 100%;
   padding: 0.75rem;
-  background: #4361ee;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -351,7 +363,7 @@ button[type='submit'] {
 }
 
 button[type='submit']:hover:not(:disabled) {
-  background: #3451d1;
+  background: var(--color-primary-hover);
 }
 
 button[type='submit']:disabled {
@@ -360,13 +372,13 @@ button[type='submit']:disabled {
 }
 
 .error {
-  color: #e63946;
+  color: var(--color-danger);
   font-size: 0.85rem;
   margin: 0.5rem 0;
 }
 
 .success {
-  color: #2a9d8f;
+  color: var(--color-success);
   font-size: 0.85rem;
   margin: 0.5rem 0;
 }

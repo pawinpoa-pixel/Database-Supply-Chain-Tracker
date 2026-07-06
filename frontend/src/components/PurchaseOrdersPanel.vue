@@ -190,20 +190,20 @@ onMounted(async () => {
 
 <style scoped>
 .panel {
-  background: white;
+  background: var(--color-surface);
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
   padding: 1.5rem 2rem 2rem;
 }
 
 h2 {
   font-size: 1.3rem;
-  color: #1a1a2e;
+  color: var(--color-text);
   margin-bottom: 1.25rem;
 }
 
 .order-card {
-  border: 1px solid #eee;
+  border: 1px solid var(--color-border-subtle);
   border-radius: 10px;
   padding: 1rem 1.25rem;
   margin-top: 1.25rem;
@@ -223,21 +223,21 @@ h2 {
   border-radius: 6px;
   font-size: 0.75rem;
   font-weight: 600;
-  background: #eef0fb;
-  color: #4361ee;
+  background: var(--color-primary-tint);
+  color: var(--color-primary);
   text-transform: capitalize;
 }
 
 .status.received,
 .status.delivered,
 .status.fulfilled {
-  background: #e3f5f2;
-  color: #2a9d8f;
+  background: var(--color-success-tint);
+  color: var(--color-success);
 }
 
 .status.cancelled {
-  background: #fdecea;
-  color: #e63946;
+  background: var(--color-danger-tint);
+  color: var(--color-danger);
 }
 
 .data-table {
@@ -251,17 +251,17 @@ h2 {
 .data-table td {
   text-align: left;
   padding: 0.4rem 0.5rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .data-table th {
-  color: #555;
+  color: var(--color-text-muted);
   font-weight: 600;
   font-size: 0.8rem;
 }
 
 .empty {
-  color: #666;
+  color: var(--color-text-muted);
   font-size: 0.85rem;
   margin-bottom: 0.75rem;
 }
@@ -283,26 +283,28 @@ h2 {
 .field label {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #444;
+  color: var(--color-text);
 }
 
 .field input,
 .field select {
   padding: 0.5rem 0.65rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   font-size: 0.9rem;
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .field input:focus,
 .field select:focus {
   outline: none;
-  border-color: #4361ee;
+  border-color: var(--color-primary);
 }
 
 button {
   padding: 0.55rem 1.2rem;
-  background: #4361ee;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -312,7 +314,7 @@ button {
 }
 
 button:hover:not(:disabled) {
-  background: #3451d1;
+  background: var(--color-primary-hover);
 }
 
 button:disabled {
@@ -322,13 +324,13 @@ button:disabled {
 
 .btn-delete {
   background: none;
-  color: #e63946;
+  color: var(--color-danger);
   padding: 0;
   font-size: 0.85rem;
 }
 
 .error {
-  color: #e63946;
+  color: var(--color-danger);
   font-size: 0.85rem;
   width: 100%;
   margin-top: 0.4rem;

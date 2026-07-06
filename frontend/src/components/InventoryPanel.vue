@@ -49,15 +49,15 @@ onMounted(async () => {
 
 <style scoped>
 .panel {
-  background: white;
+  background: var(--color-surface);
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
   padding: 1.5rem 2rem 2rem;
 }
 
 h2 {
   font-size: 1.3rem;
-  color: #1a1a2e;
+  color: var(--color-text);
   margin-bottom: 1.25rem;
 }
 
@@ -71,21 +71,21 @@ h2 {
 .data-table td {
   text-align: left;
   padding: 0.5rem 0.6rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .data-table th {
-  color: #555;
+  color: var(--color-text-muted);
   font-weight: 600;
   font-size: 0.8rem;
 }
 
 tr.low {
-  background: #fdecea;
+  background: var(--color-danger-tint);
 }
 
 .badge {
-  background: #e63946;
+  background: var(--color-danger);
   color: white;
   border-radius: 6px;
   padding: 0.1rem 0.4rem;
@@ -95,7 +95,7 @@ tr.low {
 }
 
 .empty {
-  color: #666;
+  color: var(--color-text-muted);
   font-size: 0.9rem;
 }
 </style>

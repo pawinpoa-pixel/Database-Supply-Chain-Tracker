@@ -62,28 +62,28 @@ async function handleRegister() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f0f2f5;
+  background: var(--color-bg-alt);
 }
 
 .auth-card {
-  background: white;
+  background: var(--color-surface);
   padding: 2.5rem;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-card);
   width: 100%;
   max-width: 400px;
 }
 
 h1 {
   font-size: 1.2rem;
-  color: #666;
+  color: var(--color-text-muted);
   margin-bottom: 0.25rem;
   font-weight: 500;
 }
 
 h2 {
   font-size: 1.8rem;
-  color: #1a1a2e;
+  color: var(--color-text);
   margin-bottom: 1.5rem;
 }
 
@@ -95,29 +95,31 @@ label {
   display: block;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #444;
+  color: var(--color-text);
   margin-bottom: 0.4rem;
 }
 
 input {
   width: 100%;
   padding: 0.65rem 0.85rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   font-size: 0.95rem;
   box-sizing: border-box;
+  background: var(--color-surface);
+  color: var(--color-text);
   transition: border-color 0.2s;
 }
 
 input:focus {
   outline: none;
-  border-color: #4361ee;
+  border-color: var(--color-primary);
 }
 
 button {
   width: 100%;
   padding: 0.75rem;
-  background: #4361ee;
+  background: var(--color-primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -129,7 +131,7 @@ button {
 }
 
 button:hover:not(:disabled) {
-  background: #3451d1;
+  background: var(--color-primary-hover);
 }
 
 button:disabled {
@@ -138,13 +140,13 @@ button:disabled {
 }
 
 .error {
-  color: #e63946;
+  color: var(--color-danger);
   font-size: 0.85rem;
   margin: 0.5rem 0;
 }
 
 .success {
-  color: #2a9d8f;
+  color: var(--color-success);
   font-size: 0.85rem;
   margin: 0.5rem 0;
 }
@@ -153,11 +155,11 @@ button:disabled {
   text-align: center;
   margin-top: 1.25rem;
   font-size: 0.9rem;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .switch a {
-  color: #4361ee;
+  color: var(--color-primary);
   text-decoration: none;
   font-weight: 600;
 }

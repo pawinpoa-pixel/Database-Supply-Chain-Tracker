@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import './style.css'
+import './composables/useDarkMode'
 import App from './App.vue'
 import router from './router'
 

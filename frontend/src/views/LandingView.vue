@@ -16,6 +16,7 @@
           <a href="#how-it-works">How it works</a>
         </div>
         <div class="nav-actions">
+          <DarkModeToggle />
           <button class="btn-ghost" @click="openModal('login')">Sign In</button>
           <button class="btn-primary" @click="openModal('register')">Get Started</button>
         </div>
@@ -309,6 +310,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { login, register } from '../api/auth'
+import DarkModeToggle from '../components/DarkModeToggle.vue'
 
 const router = useRouter()
 
@@ -372,8 +374,8 @@ async function handleRegister() {
 
 .landing {
   font-family: 'Inter', 'Segoe UI', sans-serif;
-  color: #1a1a2e;
-  background: #fff;
+  color: var(--color-text);
+  background: var(--color-bg);
 }
 
 /* ── Navbar ── */
@@ -381,9 +383,9 @@ async function handleRegister() {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(255,255,255,0.9);
+  background: var(--color-navbar-bg);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 .nav-inner {
   max-width: 1200px;
@@ -400,7 +402,7 @@ async function handleRegister() {
   gap: 0.5rem;
   font-weight: 700;
   font-size: 1.1rem;
-  color: #1a1a2e;
+  color: var(--color-text);
   text-decoration: none;
   flex-shrink: 0;
 }
@@ -411,12 +413,12 @@ async function handleRegister() {
 }
 .nav-links a {
   text-decoration: none;
-  color: #555;
+  color: var(--color-text-muted);
   font-size: 0.92rem;
   font-weight: 500;
   transition: color 0.2s;
 }
-.nav-links a:hover { color: #4361ee; }
+.nav-links a:hover { color: var(--color-primary); }
 .nav-actions {
   display: flex;
   align-items: center;
@@ -430,18 +432,18 @@ async function handleRegister() {
   padding: 0.45rem 1rem;
   font-size: 0.9rem;
   font-weight: 600;
-  color: #333;
+  color: var(--color-text);
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s;
   font-family: inherit;
 }
-.btn-ghost:hover { background: #f4f4f8; }
+.btn-ghost:hover { background: var(--color-surface-hover); }
 
 .btn-primary {
   text-decoration: none;
   padding: 0.5rem 1.1rem;
-  background: #4361ee;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -452,25 +454,25 @@ async function handleRegister() {
   display: inline-block;
   font-family: inherit;
 }
-.btn-primary:hover { background: #3451d1; transform: translateY(-1px); }
+.btn-primary:hover { background: var(--color-primary-hover); transform: translateY(-1px); }
 .btn-primary.large { padding: 0.75rem 1.75rem; font-size: 1rem; border-radius: 10px; }
 
 .btn-outline {
   text-decoration: none;
   padding: 0.75rem 1.75rem;
-  border: 2px solid #d0d5e8;
-  color: #333;
+  border: 2px solid var(--color-border);
+  color: var(--color-text);
   border-radius: 10px;
   font-size: 1rem;
   font-weight: 600;
   transition: border-color 0.2s, color 0.2s;
   display: inline-block;
 }
-.btn-outline:hover { border-color: #4361ee; color: #4361ee; }
+.btn-outline:hover { border-color: var(--color-primary); color: var(--color-primary); }
 
 /* ── Hero ── */
 .hero {
-  background: linear-gradient(160deg, #f5f7ff 0%, #eef1fc 50%, #f0f2f5 100%);
+  background: linear-gradient(160deg, var(--hero-grad-1) 0%, var(--hero-grad-2) 50%, var(--hero-grad-3) 100%);
   padding: 5rem 2rem 0;
   overflow: hidden;
 }
@@ -489,8 +491,8 @@ async function handleRegister() {
 }
 .badge {
   display: inline-block;
-  background: #e8ecff;
-  color: #4361ee;
+  background: var(--color-primary-tint);
+  color: var(--color-primary);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -504,13 +506,13 @@ async function handleRegister() {
   line-height: 1.18;
   font-weight: 800;
   margin: 0 0 1.25rem;
-  color: #1a1a2e;
+  color: var(--color-text);
 }
-.accent { color: #4361ee; }
+.accent { color: var(--color-primary); }
 .hero-sub {
   font-size: 1.05rem;
   line-height: 1.7;
-  color: #555;
+  color: var(--color-text-muted);
   max-width: 440px;
   margin-bottom: 2rem;
 }
@@ -579,10 +581,10 @@ async function handleRegister() {
 
 /* ── Sections ── */
 .section-inner { max-width: 1200px; margin: 0 auto; padding: 5rem 2rem; }
-.section-label { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #4361ee; margin-bottom: 0.75rem; }
+.section-label { font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-primary); margin-bottom: 0.75rem; }
 .features h2, .how-it-works h2, .cta-banner h2 { font-size: 2rem; font-weight: 800; margin: 0 0 2.5rem; }
 .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
-.feature-card { padding: 1.75rem; border: 1px solid #eaecf4; border-radius: 14px; transition: box-shadow 0.2s, transform 0.2s; }
+.feature-card { padding: 1.75rem; border: 1px solid var(--color-border-subtle); border-radius: 14px; transition: box-shadow 0.2s, transform 0.2s; }
 .feature-card:hover { box-shadow: 0 8px 24px rgba(67,97,238,0.1); transform: translateY(-2px); }
 .feature-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem; }
 .feature-icon.blue   { background: #e8ecff; color: #4361ee; }
@@ -592,16 +594,16 @@ async function handleRegister() {
 .feature-icon.green  { background: #e0f5e9; color: #1e8a4a; }
 .feature-icon.purple { background: #f3e8ff; color: #9333ea; }
 .feature-card h3 { font-size: 1rem; font-weight: 700; margin: 0 0 0.5rem; }
-.feature-card p  { font-size: 0.88rem; color: #666; line-height: 1.65; margin: 0; }
+.feature-card p  { font-size: 0.88rem; color: var(--color-text-muted); line-height: 1.65; margin: 0; }
 
 /* ── How it works ── */
-.how-it-works { background: #f5f7ff; }
+.how-it-works { background: var(--color-bg-alt); }
 .steps { display: flex; align-items: flex-start; gap: 1rem; }
-.step { flex: 1; background: #fff; border-radius: 14px; padding: 1.75rem; border: 1px solid #eaecf4; }
-.step-arrow { font-size: 1.5rem; color: #c0c8e8; padding-top: 1.75rem; flex-shrink: 0; }
-.step-num { font-size: 2rem; font-weight: 800; color: #e8ecff; margin-bottom: 0.75rem; line-height: 1; }
+.step { flex: 1; background: var(--color-surface); border-radius: 14px; padding: 1.75rem; border: 1px solid var(--color-border-subtle); }
+.step-arrow { font-size: 1.5rem; color: var(--color-border); padding-top: 1.75rem; flex-shrink: 0; }
+.step-num { font-size: 2rem; font-weight: 800; color: var(--color-primary-tint); margin-bottom: 0.75rem; line-height: 1; }
 .step h3 { font-size: 1rem; font-weight: 700; margin: 0 0 0.5rem; }
-.step p  { font-size: 0.88rem; color: #666; line-height: 1.65; margin: 0; }
+.step p  { font-size: 0.88rem; color: var(--color-text-muted); line-height: 1.65; margin: 0; }
 
 /* ── CTA Banner ── */
 .cta-banner { background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%); color: #fff; }
@@ -612,15 +614,15 @@ async function handleRegister() {
 .cta-banner .btn-primary:hover { background: #eef0fc; transform: none; }
 
 /* ── Footer ── */
-.footer { border-top: 1px solid #eee; padding: 1.5rem 2rem; }
+.footer { border-top: 1px solid var(--color-border-subtle); padding: 1.5rem 2rem; }
 .footer-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
-.footer-copy { font-size: 0.82rem; color: #aaa; }
+.footer-copy { font-size: 0.82rem; color: var(--color-text-subtle); }
 
 /* ── Modal Overlay ── */
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 15, 30, 0.55);
+  background: var(--color-overlay);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   z-index: 200;
@@ -631,20 +633,20 @@ async function handleRegister() {
 }
 
 .modal {
-  background: #fff;
+  background: var(--color-surface);
   border-radius: 20px;
   padding: 2.5rem;
   width: 100%;
   max-width: 420px;
   position: relative;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-lg);
 }
 
 .modal-close {
   position: absolute;
   top: 1.1rem;
   right: 1.1rem;
-  background: #f4f4f8;
+  background: var(--color-surface-hover);
   border: none;
   border-radius: 8px;
   width: 34px;
@@ -653,10 +655,10 @@ async function handleRegister() {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #666;
+  color: var(--color-text-muted);
   transition: background 0.15s, color 0.15s;
 }
-.modal-close:hover { background: #e8e8f0; color: #1a1a2e; }
+.modal-close:hover { background: var(--color-border); color: var(--color-text); }
 
 .modal-logo {
   display: flex;
@@ -664,41 +666,43 @@ async function handleRegister() {
   gap: 0.5rem;
   font-weight: 700;
   font-size: 1rem;
-  color: #1a1a2e;
+  color: var(--color-text);
   margin-bottom: 1.5rem;
 }
 
 .modal h2 {
   font-size: 1.6rem;
   font-weight: 800;
-  color: #1a1a2e;
+  color: var(--color-text);
   margin: 0 0 0.25rem;
 }
 .modal-sub {
   font-size: 0.88rem;
-  color: #888;
+  color: var(--color-text-subtle);
   margin-bottom: 1.5rem;
 }
 
 .field { margin-bottom: 1rem; }
-label { display: block; font-size: 0.82rem; font-weight: 600; color: #444; margin-bottom: 0.4rem; }
+label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--color-text); margin-bottom: 0.4rem; }
 input {
   width: 100%;
   padding: 0.65rem 0.85rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 9px;
   font-size: 0.95rem;
   box-sizing: border-box;
   font-family: inherit;
+  background: var(--color-surface);
+  color: var(--color-text);
   transition: border-color 0.2s, box-shadow 0.2s;
   outline: none;
 }
-input:focus { border-color: #4361ee; box-shadow: 0 0 0 3px rgba(67,97,238,0.12); }
+input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(67,97,238,0.12); }
 
 .btn-submit {
   width: 100%;
   padding: 0.78rem;
-  background: #4361ee;
+  background: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -709,22 +713,22 @@ input:focus { border-color: #4361ee; box-shadow: 0 0 0 3px rgba(67,97,238,0.12);
   font-family: inherit;
   transition: background 0.2s, transform 0.1s;
 }
-.btn-submit:hover:not(:disabled) { background: #3451d1; transform: translateY(-1px); }
+.btn-submit:hover:not(:disabled) { background: var(--color-primary-hover); transform: translateY(-1px); }
 .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.form-error   { color: #e63946; font-size: 0.82rem; margin: 0.4rem 0; }
-.form-success { color: #2a9d8f; font-size: 0.82rem; margin: 0.4rem 0; }
+.form-error   { color: var(--color-danger); font-size: 0.82rem; margin: 0.4rem 0; }
+.form-success { color: var(--color-success); font-size: 0.82rem; margin: 0.4rem 0; }
 
 .modal-switch {
   text-align: center;
   margin-top: 1.25rem;
   font-size: 0.88rem;
-  color: #888;
+  color: var(--color-text-subtle);
 }
 .link-btn {
   background: none;
   border: none;
-  color: #4361ee;
+  color: var(--color-primary);
   font-weight: 700;
   font-size: inherit;
   cursor: pointer;
