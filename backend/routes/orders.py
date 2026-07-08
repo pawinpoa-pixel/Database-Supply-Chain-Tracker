@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 import models
 import schemas
 from database import get_db
-from inventory_utils import adjust_inventory, check_sufficient_stock
 from routes.auth import get_current_user
 
 router = APIRouter(prefix="/orders", tags=["orders"])
@@ -93,34 +93,34 @@ def remove_order_item(order_id: int, item_id: int, db: Session = Depends(get_db)
     db.commit()
 
 
-@router.post("/{order_id}/fulfill", response_model=schemas.OrderRead)
-def fulfill_order(
+@router.post("/{order_id}/ship", response_model=schemas.ShipmentRead, status_code=status.HTTP_201_CREATED)
+def ship_order(
     order_id: int,
-    body: schemas.FulfillOrderRequest,
+    body: schemas.ShipOrderRequest,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    order = _get_order_or_404(db, order_id)
-    if order.status != "pending":
-        raise HTTPException(status_code=400, detail="Order has already been fulfilled or cancelled")
-    if not order.items:
-        raise HTTPException(status_code=400, detail="Order has no items to fulfill")
-
-    check_sufficient_stock(db, body.warehouse_id, [(item.product_id, item.quantity) for item in order.items])
-
-    for item in order.items:
-        adjust_inventory(
-            db,
-            warehouse_id=body.warehouse_id,
-            product_id=item.product_id,
-            delta=-item.quantity,
-            transaction_type="order_fulfillment",
-            reference_type="order",
-            reference_id=order.id,
-            performed_by=current_user.id,
+    """
+    Ships this order by calling the sp_ship_order stored procedure, which
+    checks the order is pending, checks stock, creates the shipment,
+    copies the items over, logs the status, and marks the order processing
+    -- all inside the database, in one atomic call.
+    """
+    try:
+        result = db.execute(
+            text("SELECT sp_ship_order(:order_id, :warehouse_id, :carrier_id, :tracking)"),
+            {
+                "order_id": order_id,
+                "warehouse_id": body.source_warehouse_id,
+                "carrier_id": body.carrier_id,
+                "tracking": body.tracking_number,
+            },
         )
+        shipment_id = result.scalar()
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
 
-    order.status = "fulfilled"
-    db.commit()
-    db.refresh(order)
-    return order
+    shipment = db.get(models.Shipment, shipment_id)
+    return shipment
