@@ -181,9 +181,10 @@ class OrderRead(BaseModel):
     customer: CustomerRead
     items: list[OrderItemRead] = []
 
-class FulfillOrderRequest(BaseModel):
-    warehouse_id: int
-
+class ShipOrderRequest(BaseModel):
+    source_warehouse_id: int
+    carrier_id: Optional[int] = None
+    tracking_number: Optional[str] = None
 
 # ---- Shipments ----
 
@@ -200,8 +201,10 @@ class ShipmentItemRead(BaseModel):
     product: ProductRead
 
 class ShipmentCreate(BaseModel):
+    shipment_type: str
     source_warehouse_id: int
-    destination_warehouse_id: int
+    destination_warehouse_id: Optional[int] = None
+    order_id: Optional[int] = None
     carrier_id: Optional[int] = None
     tracking_number: Optional[str] = None
     items: list[ShipmentItemCreate] = []
@@ -209,14 +212,16 @@ class ShipmentCreate(BaseModel):
 class ShipmentRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    shipment_type: str
     shipment_date: Optional[datetime] = None
     source_warehouse_id: int
-    destination_warehouse_id: int
+    destination_warehouse_id: Optional[int] = None
+    order_id: Optional[int] = None
     carrier_id: Optional[int] = None
     tracking_number: Optional[str] = None
     status: str
     source_warehouse: WarehouseRead
-    destination_warehouse: WarehouseRead
+    destination_warehouse: Optional[WarehouseRead] = None
     carrier: Optional[CarrierRead] = None
     items: list[ShipmentItemRead] = []
 
