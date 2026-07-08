@@ -222,7 +222,9 @@ class ShipmentStatusHistory(Base):
     shipment_id = Column(Integer, ForeignKey("shipments.id"), nullable=False)
     status = Column(String(20), nullable=False)
     location = Column(String(150), nullable=True)
+    changed_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     status_timestamp = Column(DateTime(timezone=True), server_default=func.now())
     notes = Column(Text, nullable=True)
 
     shipment = relationship("Shipment", back_populates="status_history")
+    changed_by_user = relationship("User")

@@ -64,7 +64,7 @@ def get_shipment_history(shipment_id: int, db: Session = Depends(get_db), _=Depe
 
 
 @router.post("", response_model=schemas.ShipmentRead, status_code=status.HTTP_201_CREATED)
-def create_shipment(body: schemas.ShipmentCreate, db: Session = Depends(get_db), _=Depends(get_current_user)):
+def create_shipment(body: schemas.ShipmentCreate, db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     _validate_shipment_target(body, db)
 
     shipment = models.Shipment(
@@ -78,7 +78,16 @@ def create_shipment(body: schemas.ShipmentCreate, db: Session = Depends(get_db),
     shipment.items = [models.ShipmentItem(**item.model_dump()) for item in body.items]
     db.add(shipment)
     db.flush()
-    db.add(models.ShipmentStatusHistory(shipment_id=shipment.id, status="pending"))
+    source = db.get(models.Warehouse, shipment.source_warehouse_id)
+    db.add(
+    models.ShipmentStatusHistory(
+        shipment_id=shipment.id,
+        status="pending",
+        location = source.warehouse_name if source else None,
+        changed_by=current_user.id,
+        notes="Shipment created"
+    )
+)
 
     if body.shipment_type == "CUSTOMER_DELIVERY":
         order = db.get(models.Order, body.order_id)
@@ -180,7 +189,17 @@ def ship_shipment(
         )
 
     shipment.status = "in_transit"
-    db.add(models.ShipmentStatusHistory(shipment_id=shipment.id, status="in_transit"))
+    source = db.get(models.Warehouse, shipment.source_warehouse_id)
+
+    db.add(
+    models.ShipmentStatusHistory(
+        shipment_id=shipment.id,
+        status="in_transit",
+        location=source.warehouse_name if source else None,
+        changed_by=current_user.id,
+        notes="Shipment departed from warehouse",
+        )
+    )
     db.commit()
     db.refresh(shipment)
     return shipment
@@ -197,26 +216,20 @@ def deliver_shipment(
         raise HTTPException(status_code=400, detail="Only an in-transit shipment can be delivered")
 
     if shipment.shipment_type == "TRANSFER":
-        for item in shipment.items:
-            adjust_inventory(
-                db,
-                warehouse_id=shipment.destination_warehouse_id,
-                product_id=item.product_id,
-                delta=item.quantity,
-                transaction_type="shipment_in",
-                reference_type="shipment",
-                reference_id=shipment.id,
-                performed_by=current_user.id,
-            )
+        destination = db.get(models.Warehouse, shipment.destination_warehouse_id)
+        location = destination.warehouse_name if destination else None
     else:
-        # CUSTOMER_DELIVERY: stock already left the system when the shipment
-        # departed. Delivery just closes out the order it belongs to.
-        order = db.get(models.Order, shipment.order_id)
-        if order:
-            order.status = "fulfilled"
+        location = "Customer"
 
-    shipment.status = "delivered"
-    db.add(models.ShipmentStatusHistory(shipment_id=shipment.id, status="delivered"))
+    db.add(
+        models.ShipmentStatusHistory(
+            shipment_id=shipment.id,
+            status="delivered",
+            location=location,
+            changed_by=current_user.id,
+            notes="Shipment delivered successfully",
+        )
+    )
     db.commit()
     db.refresh(shipment)
     return shipment

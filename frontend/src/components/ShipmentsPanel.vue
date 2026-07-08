@@ -1,3 +1,5 @@
+import ShipmentTimeline from "./ShipmentTimeline.vue"
+
 <template>
   <div class="panel">
     <h2>Shipments</h2>
@@ -98,11 +100,10 @@
       </div>
       <p v-if="actionError[shipment.id]" class="error">{{ actionError[shipment.id] }}</p>
 
-      <ul v-if="historyVisible[shipment.id]" class="history">
-        <li v-for="entry in history[shipment.id] || []" :key="entry.id">
-          <strong>{{ entry.status }}</strong> — {{ formatDate(entry.status_timestamp) }}
-        </li>
-      </ul>
+      <<ShipmentTimeline
+        v-if="historyVisible[shipment.id]"
+        :history="history[shipment.id] || []"
+      />
     </div>
   </div>
 </template>

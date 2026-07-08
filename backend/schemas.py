@@ -19,6 +19,11 @@ class ChangePassword(BaseModel):
     current_password: str
     new_password: str
 
+class UserSimple(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    username: str
 
 # ---- Categories ----
 
@@ -231,6 +236,8 @@ class ShipmentStatusHistoryRead(BaseModel):
     shipment_id: int
     status: str
     location: Optional[str] = None
+    changed_by: Optional[int] = None
+    changed_by_user: Optional[UserSimple] = None
     status_timestamp: Optional[datetime] = None
     notes: Optional[str] = None
 
