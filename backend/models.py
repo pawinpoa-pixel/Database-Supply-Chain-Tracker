@@ -148,6 +148,7 @@ class Order(Base):
 
     customer = relationship("Customer", back_populates="orders")
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
+    shipments = relationship("Shipment", back_populates="order")
 
 
 class OrderItem(Base):
@@ -167,15 +168,18 @@ class Shipment(Base):
     __tablename__ = "shipments"
 
     id = Column(Integer, primary_key=True, index=True)
+    shipment_type = Column(String(20), nullable=False)  # 'TRANSFER' or 'CUSTOMER_DELIVERY'
     shipment_date = Column(DateTime(timezone=True), server_default=func.now())
     source_warehouse_id = Column(Integer, ForeignKey("warehouses.id"), nullable=False)
-    destination_warehouse_id = Column(Integer, ForeignKey("warehouses.id"), nullable=False)
+    destination_warehouse_id = Column(Integer, ForeignKey("warehouses.id"), nullable=True)
+    order_id = Column(Integer, ForeignKey("orders.id"), nullable=True)
     carrier_id = Column(Integer, ForeignKey("carriers.id"), nullable=True)
     tracking_number = Column(String(100), nullable=True)
     status = Column(String(20), nullable=False, default="pending")
 
     source_warehouse = relationship("Warehouse", foreign_keys=[source_warehouse_id])
     destination_warehouse = relationship("Warehouse", foreign_keys=[destination_warehouse_id])
+    order = relationship("Order", back_populates="shipments")
     carrier = relationship("Carrier", back_populates="shipments")
     items = relationship("ShipmentItem", back_populates="shipment", cascade="all, delete-orphan")
     status_history = relationship(
