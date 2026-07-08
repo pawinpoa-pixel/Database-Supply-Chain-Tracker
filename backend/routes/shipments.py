@@ -17,6 +17,31 @@ def _get_shipment_or_404(db: Session, shipment_id: int) -> models.Shipment:
     return shipment
 
 
+def _validate_shipment_target(body: schemas.ShipmentCreate, db: Session, is_update: bool = False) -> None:
+    if body.shipment_type == "TRANSFER":
+        if not body.destination_warehouse_id or body.order_id:
+            raise HTTPException(
+                status_code=400,
+                detail="TRANSFER shipments require destination_warehouse_id and must not set order_id",
+            )
+        if body.source_warehouse_id == body.destination_warehouse_id:
+            raise HTTPException(status_code=400, detail="Source and destination warehouse must differ")
+    elif body.shipment_type == "CUSTOMER_DELIVERY":
+        if not body.order_id or body.destination_warehouse_id:
+            raise HTTPException(
+                status_code=400,
+                detail="CUSTOMER_DELIVERY shipments require order_id and must not set destination_warehouse_id",
+            )
+        order = db.get(models.Order, body.order_id)
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        expected_status = "processing" if is_update else "pending"
+        if order.status != expected_status:
+            raise HTTPException(status_code=400, detail="Order is not in the expected state for this operation")
+    else:
+        raise HTTPException(status_code=400, detail="shipment_type must be TRANSFER or CUSTOMER_DELIVERY")
+
+
 @router.get("", response_model=list[schemas.ShipmentRead])
 def list_shipments(db: Session = Depends(get_db), _=Depends(get_current_user)):
     return db.query(models.Shipment).order_by(models.Shipment.id.desc()).all()
@@ -40,12 +65,13 @@ def get_shipment_history(shipment_id: int, db: Session = Depends(get_db), _=Depe
 
 @router.post("", response_model=schemas.ShipmentRead, status_code=status.HTTP_201_CREATED)
 def create_shipment(body: schemas.ShipmentCreate, db: Session = Depends(get_db), _=Depends(get_current_user)):
-    if body.source_warehouse_id == body.destination_warehouse_id:
-        raise HTTPException(status_code=400, detail="Source and destination warehouse must differ")
+    _validate_shipment_target(body, db)
 
     shipment = models.Shipment(
+        shipment_type=body.shipment_type,
         source_warehouse_id=body.source_warehouse_id,
         destination_warehouse_id=body.destination_warehouse_id,
+        order_id=body.order_id,
         carrier_id=body.carrier_id,
         tracking_number=body.tracking_number,
     )
@@ -53,6 +79,11 @@ def create_shipment(body: schemas.ShipmentCreate, db: Session = Depends(get_db),
     db.add(shipment)
     db.flush()
     db.add(models.ShipmentStatusHistory(shipment_id=shipment.id, status="pending"))
+
+    if body.shipment_type == "CUSTOMER_DELIVERY":
+        order = db.get(models.Order, body.order_id)
+        order.status = "processing"
+
     db.commit()
     db.refresh(shipment)
     return shipment
@@ -68,8 +99,9 @@ def update_shipment(
     shipment = _get_shipment_or_404(db, shipment_id)
     if shipment.status != "pending":
         raise HTTPException(status_code=400, detail="Only pending shipments can be edited")
-    if body.source_warehouse_id == body.destination_warehouse_id:
-        raise HTTPException(status_code=400, detail="Source and destination warehouse must differ")
+    if body.shipment_type != shipment.shipment_type:
+        raise HTTPException(status_code=400, detail="Cannot change shipment_type after creation")
+    _validate_shipment_target(body, db, is_update=True)
     shipment.source_warehouse_id = body.source_warehouse_id
     shipment.destination_warehouse_id = body.destination_warehouse_id
     shipment.carrier_id = body.carrier_id
@@ -164,17 +196,24 @@ def deliver_shipment(
     if shipment.status != "in_transit":
         raise HTTPException(status_code=400, detail="Only an in-transit shipment can be delivered")
 
-    for item in shipment.items:
-        adjust_inventory(
-            db,
-            warehouse_id=shipment.destination_warehouse_id,
-            product_id=item.product_id,
-            delta=item.quantity,
-            transaction_type="shipment_in",
-            reference_type="shipment",
-            reference_id=shipment.id,
-            performed_by=current_user.id,
-        )
+    if shipment.shipment_type == "TRANSFER":
+        for item in shipment.items:
+            adjust_inventory(
+                db,
+                warehouse_id=shipment.destination_warehouse_id,
+                product_id=item.product_id,
+                delta=item.quantity,
+                transaction_type="shipment_in",
+                reference_type="shipment",
+                reference_id=shipment.id,
+                performed_by=current_user.id,
+            )
+    else:
+        # CUSTOMER_DELIVERY: stock already left the system when the shipment
+        # departed. Delivery just closes out the order it belongs to.
+        order = db.get(models.Order, shipment.order_id)
+        if order:
+            order.status = "fulfilled"
 
     shipment.status = "delivered"
     db.add(models.ShipmentStatusHistory(shipment_id=shipment.id, status="delivered"))
