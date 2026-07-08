@@ -96,12 +96,21 @@ CREATE TABLE IF NOT EXISTS order_items (
 
 CREATE TABLE IF NOT EXISTS shipments (
     id                          SERIAL PRIMARY KEY,
+    shipment_type               VARCHAR(20) NOT NULL,
     shipment_date               TIMESTAMPTZ DEFAULT NOW(),
     source_warehouse_id         INTEGER NOT NULL REFERENCES warehouses(id),
-    destination_warehouse_id    INTEGER NOT NULL REFERENCES warehouses(id),
+    destination_warehouse_id    INTEGER REFERENCES warehouses(id),
+    order_id                    INTEGER REFERENCES orders(id),
     carrier_id                  INTEGER REFERENCES carriers(id),
     tracking_number             VARCHAR(100),
-    status                      VARCHAR(20) NOT NULL DEFAULT 'pending'
+    status                      VARCHAR(20) NOT NULL DEFAULT 'pending',
+    CHECK (shipment_type IN ('TRANSFER', 'CUSTOMER_DELIVERY')),
+    CHECK (
+        (shipment_type = 'TRANSFER' AND destination_warehouse_id IS NOT NULL AND order_id IS NULL)
+        OR
+        (shipment_type = 'CUSTOMER_DELIVERY' AND order_id IS NOT NULL AND destination_warehouse_id IS NULL)
+    ),
+    CHECK (shipment_type <> 'TRANSFER' OR source_warehouse_id <> destination_warehouse_id)
 );
 
 CREATE TABLE IF NOT EXISTS shipment_items (
