@@ -1,5 +1,3 @@
-import ShipmentTimeline from "./ShipmentTimeline.vue"
-
 <template>
   <div class="panel">
     <h2>Shipments</h2>
@@ -100,7 +98,7 @@ import ShipmentTimeline from "./ShipmentTimeline.vue"
       </div>
       <p v-if="actionError[shipment.id]" class="error">{{ actionError[shipment.id] }}</p>
 
-      <<ShipmentTimeline
+      <ShipmentTimeline
         v-if="historyVisible[shipment.id]"
         :history="history[shipment.id] || []"
       />
@@ -114,6 +112,7 @@ import { shipments as shipmentsApi } from '../api/shipments'
 import { warehouses as warehousesApi } from '../api/warehouses'
 import { carriers as carriersApi } from '../api/partners'
 import { products as productsApi } from '../api/catalog'
+import ShipmentTimeline from './ShipmentTimeline.vue'
 
 const shipments = ref([])
 const warehouses = ref([])

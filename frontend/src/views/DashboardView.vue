@@ -1,121 +1,168 @@
 <template>
-  <div class="dashboard">
-    <header>
-      <h1>Supply Chain Tracker</h1>
-      <div class="header-actions">
-        <DarkModeToggle />
-        <button class="btn-logout" @click="handleLogout">Logout</button>
-      </div>
-    </header>
-
-    <nav class="tabs">
-      <button
-        v-for="tab in tabs"
-        :key="tab.key"
-        :class="{ active: activeTab === tab.key }"
-        @click="activeTab = tab.key"
-      >
-        {{ tab.label }}
-      </button>
-    </nav>
-
-    <main>
-      <div v-if="activeTab === 'catalog'" class="tab-content stack">
-        <ResourcePanel
-          title="Categories"
-          :fields="categoryFields"
-          :list-fn="categories.list"
-          :create-fn="categories.create"
-          :remove-fn="categories.remove"
-        />
-        <ResourcePanel
-          title="Products"
-          :fields="productFields"
-          :list-fn="products.list"
-          :create-fn="products.create"
-          :remove-fn="products.remove"
-        />
+  <div class="app-shell" :class="{ 'sidebar-open': sidebarOpen }">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-mark">SC</span>
+        <span class="brand-name">Supply Chain Tracker</span>
       </div>
 
-      <div v-if="activeTab === 'partners'" class="tab-content stack">
-        <ResourcePanel
-          title="Suppliers"
-          :fields="supplierFields"
-          :list-fn="suppliers.list"
-          :create-fn="suppliers.create"
-          :remove-fn="suppliers.remove"
-        />
-        <ResourcePanel
-          title="Customers"
-          :fields="customerFields"
-          :list-fn="customers.list"
-          :create-fn="customers.create"
-          :remove-fn="customers.remove"
-        />
-        <ResourcePanel
-          title="Carriers"
-          :fields="carrierFields"
-          :list-fn="carriers.list"
-          :create-fn="carriers.create"
-          :remove-fn="carriers.remove"
-        />
-      </div>
+      <nav class="sidebar-nav">
+        <button
+          v-for="tab in tabs"
+          :key="tab.key"
+          class="nav-item"
+          :class="{ active: activeTab === tab.key }"
+          @click="selectTab(tab.key)"
+        >
+          <component :is="tab.icon" />
+          <span>{{ tab.label }}</span>
+        </button>
+      </nav>
+    </aside>
 
-      <div v-if="activeTab === 'warehouses'" class="tab-content stack">
-        <ResourcePanel
-          title="Warehouses"
-          :fields="warehouseFields"
-          :list-fn="warehouses.list"
-          :create-fn="warehouses.create"
-          :remove-fn="warehouses.remove"
-        />
-        <InventoryPanel />
-      </div>
+    <div class="sidebar-scrim" @click="sidebarOpen = false" />
 
-      <div v-if="activeTab === 'purchase-orders'" class="tab-content">
-        <PurchaseOrdersPanel />
-      </div>
+    <div class="main-column">
+      <header class="topbar">
+        <button class="menu-toggle" @click="sidebarOpen = !sidebarOpen" aria-label="Toggle menu">
+          <IconMenu />
+        </button>
 
-      <div v-if="activeTab === 'orders'" class="tab-content">
-        <OrdersPanel />
-      </div>
+        <div class="breadcrumb">
+          <button class="crumb-home" @click="selectTab('catalog')">
+            <IconHome />
+          </button>
+          <span class="crumb-sep">/</span>
+          <span class="crumb-current">{{ activeTabLabel }}</span>
+        </div>
 
-      <div v-if="activeTab === 'shipments'" class="tab-content">
-        <ShipmentsPanel />
-      </div>
+        <div class="topbar-actions">
+          <DarkModeToggle />
 
-      <div v-if="activeTab === 'settings'" class="tab-content">
-        <section class="card">
-          <h2>Change Password</h2>
-          <form @submit.prevent="handleChangePassword">
-            <div class="field">
-              <label>Current Password</label>
-              <input v-model="currentPassword" type="password" placeholder="Enter current password" required />
-            </div>
-            <div class="field">
-              <label>New Password</label>
-              <input v-model="newPassword" type="password" placeholder="Enter new password" required />
-            </div>
-            <div class="field">
-              <label>Confirm New Password</label>
-              <input v-model="confirmPassword" type="password" placeholder="Confirm new password" required />
-            </div>
-            <p v-if="error" class="error">{{ error }}</p>
-            <p v-if="success" class="success">{{ success }}</p>
-            <button type="submit" :disabled="loading">
-              {{ loading ? 'Updating...' : 'Update Password' }}
+          <div class="user-menu">
+            <button class="user-chip" @click="userMenuOpen = !userMenuOpen">
+              <span class="avatar">{{ userInitial }}</span>
+              <span class="username">{{ username || 'Admin' }}</span>
+              <IconChevronDown />
             </button>
-          </form>
-        </section>
-      </div>
-    </main>
+            <div v-if="userMenuOpen" class="user-dropdown">
+              <button @click="goToSettings">
+                <IconKey />
+                Change password
+              </button>
+              <button class="logout-item" @click="handleLogout">
+                <IconLogout />
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="content-area">
+        <div v-if="activeTab === 'catalog'" class="content-stack">
+          <ResourcePanel
+            title="Categories"
+            :fields="categoryFields"
+            :list-fn="categories.list"
+            :create-fn="categories.create"
+            :update-fn="categories.update"
+            :remove-fn="categories.remove"
+          />
+          <ResourcePanel
+            title="Products"
+            :fields="productFields"
+            :list-fn="products.list"
+            :create-fn="products.create"
+            :update-fn="products.update"
+            :remove-fn="products.remove"
+          />
+        </div>
+
+        <div v-if="activeTab === 'partners'" class="content-stack">
+          <ResourcePanel
+            title="Suppliers"
+            :fields="supplierFields"
+            :list-fn="suppliers.list"
+            :create-fn="suppliers.create"
+            :update-fn="suppliers.update"
+            :remove-fn="suppliers.remove"
+          />
+          <ResourcePanel
+            title="Customers"
+            :fields="customerFields"
+            :list-fn="customers.list"
+            :create-fn="customers.create"
+            :update-fn="customers.update"
+            :remove-fn="customers.remove"
+          />
+          <ResourcePanel
+            title="Carriers"
+            :fields="carrierFields"
+            :list-fn="carriers.list"
+            :create-fn="carriers.create"
+            :update-fn="carriers.update"
+            :remove-fn="carriers.remove"
+          />
+        </div>
+
+        <div v-if="activeTab === 'warehouses'" class="content-stack">
+          <ResourcePanel
+            title="Warehouses"
+            :fields="warehouseFields"
+            :list-fn="warehouses.list"
+            :create-fn="warehouses.create"
+            :update-fn="warehouses.update"
+            :remove-fn="warehouses.remove"
+          />
+          <InventoryPanel />
+        </div>
+
+        <div v-if="activeTab === 'purchase-orders'" class="content-stack">
+          <PurchaseOrdersPanel />
+        </div>
+
+        <div v-if="activeTab === 'orders'" class="content-stack">
+          <OrdersPanel />
+        </div>
+
+        <div v-if="activeTab === 'shipments'" class="content-stack">
+          <ShipmentsPanel />
+        </div>
+
+        <div v-if="activeTab === 'settings'" class="content-stack">
+          <section class="card settings-card">
+            <h2>Change Password</h2>
+            <form @submit.prevent="handleChangePassword">
+              <div class="field">
+                <label>Current Password</label>
+                <input v-model="currentPassword" type="password" placeholder="Enter current password" required />
+              </div>
+              <div class="field">
+                <label>New Password</label>
+                <input v-model="newPassword" type="password" placeholder="Enter new password" required />
+              </div>
+              <div class="field">
+                <label>Confirm New Password</label>
+                <input v-model="confirmPassword" type="password" placeholder="Confirm new password" required />
+              </div>
+              <p v-if="error" class="error">{{ error }}</p>
+              <p v-if="success" class="success">{{ success }}</p>
+              <button type="submit" :disabled="loading">
+                {{ loading ? 'Updating...' : 'Update Password' }}
+              </button>
+            </form>
+          </section>
+        </div>
+      </main>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { logout, changePassword } from '../api/auth'
+import { logout, changePassword, getCurrentUsername } from '../api/auth'
 import { categories, products } from '../api/catalog'
 import { suppliers, customers, carriers } from '../api/partners'
 import { warehouses } from '../api/warehouses'
@@ -125,19 +172,46 @@ import PurchaseOrdersPanel from '../components/PurchaseOrdersPanel.vue'
 import OrdersPanel from '../components/OrdersPanel.vue'
 import ShipmentsPanel from '../components/ShipmentsPanel.vue'
 import DarkModeToggle from '../components/DarkModeToggle.vue'
+import IconHome from '../components/icons/IconHome.vue'
+import IconGrid from '../components/icons/IconGrid.vue'
+import IconUsers from '../components/icons/IconUsers.vue'
+import IconWarehouse from '../components/icons/IconWarehouse.vue'
+import IconClipboard from '../components/icons/IconClipboard.vue'
+import IconPackage from '../components/icons/IconPackage.vue'
+import IconTruck from '../components/icons/IconTruck.vue'
+import IconSettings from '../components/icons/IconSettings.vue'
+import IconLogout from '../components/icons/IconLogout.vue'
+import IconChevronDown from '../components/icons/IconChevronDown.vue'
+import IconMenu from '../components/icons/IconMenu.vue'
+import IconKey from '../components/icons/IconKey.vue'
 
 const router = useRouter()
 
 const tabs = [
-  { key: 'catalog', label: 'Catalog' },
-  { key: 'partners', label: 'Partners' },
-  { key: 'warehouses', label: 'Warehouses' },
-  { key: 'purchase-orders', label: 'Purchase Orders' },
-  { key: 'orders', label: 'Orders' },
-  { key: 'shipments', label: 'Shipments' },
-  { key: 'settings', label: 'Settings' },
+  { key: 'catalog', label: 'Catalog', icon: IconGrid },
+  { key: 'partners', label: 'Partners', icon: IconUsers },
+  { key: 'warehouses', label: 'Warehouses', icon: IconWarehouse },
+  { key: 'purchase-orders', label: 'Purchase Orders', icon: IconClipboard },
+  { key: 'orders', label: 'Orders', icon: IconPackage },
+  { key: 'shipments', label: 'Shipments', icon: IconTruck },
+  { key: 'settings', label: 'Settings', icon: IconSettings },
 ]
 const activeTab = ref('catalog')
+const activeTabLabel = computed(() => tabs.find((t) => t.key === activeTab.value)?.label ?? '')
+const sidebarOpen = ref(false)
+const userMenuOpen = ref(false)
+const username = getCurrentUsername()
+const userInitial = computed(() => (username ? username[0].toUpperCase() : 'A'))
+
+function selectTab(key) {
+  activeTab.value = key
+  sidebarOpen.value = false
+  userMenuOpen.value = false
+}
+
+function goToSettings() {
+  selectTab('settings')
+}
 
 const categoryFields = [
   { key: 'category_name', label: 'Name', type: 'text', required: true },
@@ -229,77 +303,243 @@ async function handleChangePassword() {
 </script>
 
 <style scoped>
-.dashboard {
+.app-shell {
   min-height: 100vh;
-  background: var(--color-bg-alt);
-  font-family: sans-serif;
-}
-
-header {
   display: flex;
-  justify-content: space-between;
+  background: var(--color-bg-alt);
+}
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--color-sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 20;
+}
+
+.sidebar-brand {
+  display: flex;
   align-items: center;
+  gap: 0.65rem;
+  padding: 1.3rem 1.25rem;
+  border-bottom: 1px solid var(--color-sidebar-border);
+}
+
+.brand-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--color-sidebar-brand);
+  color: #06231f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.brand-name {
+  color: var(--color-sidebar-text-active);
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+  gap: 0.15rem;
+  overflow-y: auto;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border: none;
+  border-left: 3px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: var(--color-sidebar-text);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.nav-item svg {
+  flex-shrink: 0;
+}
+
+.nav-item:hover {
+  background: var(--color-sidebar-hover-bg);
+  color: var(--color-sidebar-text-active);
+}
+
+.nav-item.active {
+  background: var(--color-sidebar-active-bg);
+  color: var(--color-sidebar-text-active);
+  border-left-color: var(--color-sidebar-accent);
+}
+
+.sidebar-scrim {
+  display: none;
+}
+
+/* Main column */
+.main-column {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1.75rem;
   background: var(--color-surface);
-  padding: 1rem 2rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-header h1 {
-  font-size: 1.3rem;
+.menu-toggle {
+  display: none;
+  border: none;
+  background: none;
   color: var(--color-text);
-  margin: 0;
+  cursor: pointer;
+  padding: 0.3rem;
 }
 
-.header-actions {
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.crumb-home {
+  display: flex;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0.2rem;
+}
+
+.crumb-home:hover {
+  color: var(--color-primary);
+}
+
+.crumb-sep {
+  opacity: 0.6;
+}
+
+.crumb-current {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.topbar-actions {
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 0.75rem;
 }
 
-.btn-logout {
-  padding: 0.45rem 1rem;
-  background: var(--color-danger);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
+.user-menu {
+  position: relative;
 }
 
-.btn-logout:hover {
-  background: var(--color-danger-hover);
-}
-
-.tabs {
+.user-chip {
   display: flex;
-  gap: 0.5rem;
-  padding: 1rem 2rem 0;
-  flex-wrap: wrap;
-}
-
-.tabs button {
-  padding: 0.55rem 1.1rem;
-  background: none;
-  border: none;
-  border-radius: 8px 8px 0 0;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--color-text-muted);
-}
-
-.tabs button.active {
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0.7rem 0.35rem 0.35rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
   background: var(--color-surface);
-  color: var(--color-primary);
+  color: var(--color-text);
+  cursor: pointer;
 }
 
-main {
-  padding: 2rem;
-  max-width: 1100px;
+.avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
-.tab-content.stack {
+.username {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.user-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-card);
+  min-width: 190px;
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.user-dropdown button {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  color: var(--color-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.user-dropdown button:hover {
+  background: var(--color-surface-hover);
+}
+
+.logout-item {
+  color: var(--color-danger) !important;
+}
+
+.content-area {
+  padding: 1.75rem;
+  max-width: 1200px;
+  width: 100%;
+}
+
+.content-stack {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -307,14 +547,17 @@ main {
 
 .card {
   background: var(--color-surface);
-  padding: 2rem;
-  border-radius: 12px;
+  border-radius: 14px;
   box-shadow: var(--shadow-card);
+  padding: 2rem;
+}
+
+.settings-card {
   max-width: 480px;
 }
 
 h2 {
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   color: var(--color-text);
   margin-bottom: 1.5rem;
 }
@@ -381,5 +624,40 @@ button[type='submit']:disabled {
   color: var(--color-success);
   font-size: 0.85rem;
   margin: 0.5rem 0;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+  }
+
+  .app-shell.sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+
+  .app-shell.sidebar-open .sidebar-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: var(--color-overlay);
+    z-index: 15;
+  }
+
+  .menu-toggle {
+    display: inline-flex;
+  }
+
+  .username {
+    display: none;
+  }
+
+  .content-area {
+    padding: 1.25rem;
+  }
 }
 </style>
