@@ -31,8 +31,12 @@ class Category(Base):
     id = Column(Integer, primary_key=True, index=True)
     category_name = Column(String(100), nullable=False)
     description = Column(Text, nullable=True)
+    parent_category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
+    color_hex = Column(String(7), nullable=True, default="#4361ee")
 
     products = relationship("Product", back_populates="category")
+    parent = relationship("Category", remote_side=[id], back_populates="children")
+    children = relationship("Category", back_populates="parent")
 
 
 class Supplier(Base):
@@ -89,11 +93,20 @@ class Product(Base):
     sku = Column(String(50), unique=True, nullable=False, index=True)
     product_name = Column(String(150), nullable=False)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
+    brand = Column(String(100), nullable=True)
+    barcode = Column(String(64), unique=True, nullable=True)
+    description = Column(Text, nullable=True)
+    unit_of_measure = Column(String(20), nullable=True, default="EA")
     unit_price = Column(Numeric(10, 2), nullable=False, default=0)
+    weight_kg = Column(Numeric(10, 3), nullable=True)
+    primary_supplier_id = Column(Integer, ForeignKey("suppliers.id"), nullable=True)
     reorder_level = Column(Integer, nullable=False, default=0)
+    max_stock_level = Column(Integer, nullable=True)
+    image_url = Column(String(500), nullable=True)
     is_active = Column(Boolean, nullable=False, default=True)
 
     category = relationship("Category", back_populates="products")
+    primary_supplier = relationship("Supplier")
 
 
 class Inventory(Base):

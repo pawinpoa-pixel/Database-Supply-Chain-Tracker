@@ -34,6 +34,17 @@ def update_category(
     category = db.get(models.Category, category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
+    if body.parent_category_id is not None:
+        visited = set()
+        current_id = body.parent_category_id
+        while current_id is not None:
+            if current_id == category_id:
+                raise HTTPException(status_code=400, detail="Circular category hierarchy is not allowed")
+            if current_id in visited:
+                break
+            visited.add(current_id)
+            parent_row = db.get(models.Category, current_id)
+            current_id = parent_row.parent_category_id if parent_row else None
     for key, value in body.model_dump().items():
         setattr(category, key, value)
     db.commit()
@@ -59,6 +70,8 @@ def list_products(db: Session = Depends(get_db), _=Depends(get_current_user)):
 def create_product(body: schemas.ProductCreate, db: Session = Depends(get_db), _=Depends(get_current_user)):
     if db.query(models.Product).filter(models.Product.sku == body.sku).first():
         raise HTTPException(status_code=400, detail="SKU already exists")
+    if body.barcode and db.query(models.Product).filter(models.Product.barcode == body.barcode).first():
+        raise HTTPException(status_code=400, detail="Barcode already exists")
     product = models.Product(**body.model_dump())
     db.add(product)
     db.commit()
@@ -79,6 +92,14 @@ def update_product(
     existing = db.query(models.Product).filter(models.Product.sku == body.sku, models.Product.id != product_id).first()
     if existing:
         raise HTTPException(status_code=400, detail="SKU already exists")
+    if body.barcode:
+        barcode_clash = (
+            db.query(models.Product)
+            .filter(models.Product.barcode == body.barcode, models.Product.id != product_id)
+            .first()
+        )
+        if barcode_clash:
+            raise HTTPException(status_code=400, detail="Barcode already exists")
     for key, value in body.model_dump().items():
         setattr(product, key, value)
     db.commit()

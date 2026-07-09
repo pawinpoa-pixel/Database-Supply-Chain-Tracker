@@ -215,21 +215,60 @@ function goToSettings() {
 
 const categoryFields = [
   { key: 'category_name', label: 'Name', type: 'text', required: true },
-  { key: 'description', label: 'Description', type: 'text' },
+  { key: 'description', label: 'Description', type: 'text', hideInTable: true },
+  {
+    key: 'parent_category_id',
+    label: 'Parent category',
+    type: 'select',
+    optionsSource: () => categories.list().then((list) => list.map((c) => ({ value: c.id, label: c.category_name }))),
+    display: (row) => row.parent?.category_name ?? '—',
+  },
+  { key: 'color_hex', label: 'Color', type: 'color', default: '#4361ee' },
+]
+
+const unitOfMeasureOptions = [
+  { value: 'EA', label: 'Each (EA)' },
+  { value: 'BOX', label: 'Box' },
+  { value: 'CASE', label: 'Case' },
+  { value: 'PACK', label: 'Pack' },
+  { value: 'PALLET', label: 'Pallet' },
+  { value: 'KG', label: 'Kilogram (KG)' },
+  { value: 'L', label: 'Litre (L)' },
 ]
 
 const productFields = [
+  { key: 'image_url', label: 'Image', type: 'image' },
   { key: 'sku', label: 'SKU', type: 'text', required: true },
   { key: 'product_name', label: 'Name', type: 'text', required: true },
+  { key: 'brand', label: 'Brand', type: 'text' },
+  { key: 'barcode', label: 'Barcode / UPC', type: 'text', hideInTable: true },
   {
     key: 'category_id',
     label: 'Category',
     type: 'select',
     optionsSource: () => categories.list().then((list) => list.map((c) => ({ value: c.id, label: c.category_name }))),
-    display: (row) => row.category?.category_name ?? '',
+    display: (row) => row.category?.category_name ?? '—',
+  },
+  {
+    key: 'primary_supplier_id',
+    label: 'Primary supplier',
+    type: 'select',
+    optionsSource: () => suppliers.list().then((list) => list.map((s) => ({ value: s.id, label: s.company_name }))),
+    display: (row) => row.primary_supplier?.company_name ?? '—',
+  },
+  {
+    key: 'unit_of_measure',
+    label: 'Unit of measure',
+    type: 'select',
+    default: 'EA',
+    optionsSource: () => Promise.resolve(unitOfMeasureOptions),
+    display: (row) => row.unit_of_measure ?? 'EA',
   },
   { key: 'unit_price', label: 'Unit price', type: 'number', step: '0.01', required: true },
+  { key: 'weight_kg', label: 'Weight (kg)', type: 'number', step: '0.001', hideInTable: true },
   { key: 'reorder_level', label: 'Reorder level', type: 'number', required: true, default: '0' },
+  { key: 'max_stock_level', label: 'Max stock', type: 'number' },
+  { key: 'description', label: 'Description', type: 'text', hideInTable: true },
   {
     key: 'is_active',
     label: 'Active',

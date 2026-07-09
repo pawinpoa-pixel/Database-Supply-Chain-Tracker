@@ -5,7 +5,8 @@
       "name": "backend",
       "runtimeExecutable": "/Users/tx3014/Downloads/Database-Supply-Chain-Tracker/backend/venv/bin/uvicorn",
       "runtimeArgs": ["--app-dir", "/Users/tx3014/Downloads/Database-Supply-Chain-Tracker/backend", "main:app", "--host", "0.0.0.0", "--port", "8000"],
-      "port": 8000
+      "port": 8000,
+      "autoPort": false
     },
     {
       "name": "frontend",

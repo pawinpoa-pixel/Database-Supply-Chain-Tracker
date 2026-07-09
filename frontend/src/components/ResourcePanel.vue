@@ -23,6 +23,32 @@
                 {{ opt.label }}
               </option>
             </select>
+            <div v-else-if="f.type === 'image'" class="image-field">
+              <img class="image-preview" :src="form[f.key] || placeholderImage" @error="onImgError" />
+              <input type="text" v-model="form[f.key]" :placeholder="f.placeholder || 'https://...'" />
+            </div>
+            <div v-else-if="f.type === 'color'" class="color-picker-field">
+              <button
+                type="button"
+                class="color-swatch-btn"
+                @click.stop="toggleColorPicker(f.key)"
+              >
+                <span class="swatch" :style="{ background: form[f.key] || '#ccc' }" />
+                <span class="color-label">{{ form[f.key] || 'Choose color' }}</span>
+              </button>
+              <div v-if="colorPickerOpen[f.key]" class="color-popup" @click.stop>
+                <button
+                  v-for="c in colorPresets"
+                  :key="c"
+                  type="button"
+                  class="color-option"
+                  :class="{ selected: form[f.key] === c }"
+                  :style="{ background: c }"
+                  :title="c"
+                  @click="selectColor(f.key, c)"
+                />
+              </div>
+            </div>
             <input
               v-else
               :type="f.type"
@@ -66,7 +92,7 @@
           <tr>
             <th class="col-icon">Edit</th>
             <th class="col-icon">Del</th>
-            <th v-for="f in fields" :key="f.key">{{ f.label }}</th>
+            <th v-for="f in visibleFields" :key="f.key">{{ f.label }}</th>
           </tr>
         </thead>
         <tbody>
@@ -81,7 +107,19 @@
                 <IconTrash />
               </button>
             </td>
-            <td v-for="f in fields" :key="f.key">{{ displayValue(row, f) }}</td>
+            <td v-for="f in visibleFields" :key="f.key">
+              <img
+                v-if="f.type === 'image'"
+                class="cell-thumb"
+                :src="row[f.key] || placeholderImage"
+                @error="onImgError"
+              />
+              <div v-else-if="f.type === 'color'" class="color-chip">
+                <span class="swatch" :style="{ background: row[f.key] || '#ccc' }" />
+                {{ row[f.key] || '—' }}
+              </div>
+              <template v-else>{{ displayValue(row, f) }}</template>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -112,7 +150,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, computed, onMounted, watch } from 'vue'
+import { reactive, ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import IconPencil from './icons/IconPencil.vue'
 import IconTrash from './icons/IconTrash.vue'
 import IconSearch from './icons/IconSearch.vue'
@@ -140,6 +178,31 @@ const editingId = ref(null)
 const search = ref('')
 const page = ref(1)
 
+const colorPresets = [
+  '#e63946', '#f3722c', '#f9c74f', '#90be6d', '#2a9d8f', '#4361ee', '#3a86ff',
+  '#7209b7', '#b5179e', '#577590', '#6d4c41', '#495057', '#adb5bd',
+]
+
+const colorPickerOpen = reactive({})
+
+function toggleColorPicker(key) {
+  const isOpen = colorPickerOpen[key]
+  for (const k in colorPickerOpen) colorPickerOpen[k] = false
+  colorPickerOpen[key] = !isOpen
+}
+
+function selectColor(key, color) {
+  form[key] = color
+  colorPickerOpen[key] = false
+}
+
+function closeColorPickers() {
+  for (const k in colorPickerOpen) colorPickerOpen[k] = false
+}
+
+onMounted(() => document.addEventListener('click', closeColorPickers))
+onUnmounted(() => document.removeEventListener('click', closeColorPickers))
+
 function defaultFor(f) {
   if (f.default !== undefined) return f.default
   return f.type === 'checkbox' ? true : ''
@@ -154,6 +217,18 @@ function resetForm() {
 function displayValue(row, f) {
   if (f.display) return f.display(row)
   return row[f.key]
+}
+
+const visibleFields = computed(() => props.fields.filter((f) => !f.hideInTable))
+
+const placeholderImage =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect width="40" height="40" rx="6" fill="#cbd5e1"/><path d="M10 27l6-8 5 6 4-5 7 9z" fill="#94a3b8"/><circle cx="15" cy="14" r="3" fill="#94a3b8"/></svg>'
+  )
+
+function onImgError(event) {
+  event.target.src = placeholderImage
 }
 
 const filteredRows = computed(() => {
@@ -201,7 +276,7 @@ function buildPayload() {
   for (const f of props.fields) {
     let value = form[f.key]
     if (f.type === 'number') value = value === '' ? null : Number(value)
-    if (f.type === 'select' && value === '') value = null
+    else if (f.type !== 'checkbox' && value === '' && !f.required) value = null
     payload[f.key] = value
   }
   return payload
@@ -593,5 +668,117 @@ onMounted(async () => {
   background: var(--color-primary);
   border-color: var(--color-primary);
   color: white;
+}
+
+.image-field {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.image-preview {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--color-border);
+  flex-shrink: 0;
+  background: var(--color-bg-alt);
+}
+
+.image-field input {
+  flex: 1;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: var(--color-bg-alt);
+  color: var(--color-text);
+}
+
+.cell-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  object-fit: cover;
+  border: 1px solid var(--color-border-subtle);
+  vertical-align: middle;
+  background: var(--color-bg-alt);
+}
+
+.color-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.color-picker-field {
+  position: relative;
+}
+
+.color-swatch-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-alt);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.color-swatch-btn:hover {
+  border-color: var(--color-primary);
+}
+
+.color-swatch-btn .swatch {
+  width: 18px;
+  height: 18px;
+}
+
+.color-popup {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.4rem;
+  padding: 0.6rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-card);
+}
+
+.color-option {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.color-option:hover {
+  transform: scale(1.12);
+}
+
+.color-option.selected {
+  border-color: var(--color-text);
+  box-shadow: 0 0 0 2px var(--color-surface);
 }
 </style>

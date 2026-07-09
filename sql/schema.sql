@@ -7,9 +7,11 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS categories (
-    id            SERIAL PRIMARY KEY,
-    category_name VARCHAR(100) NOT NULL,
-    description   TEXT
+    id                  SERIAL PRIMARY KEY,
+    category_name       VARCHAR(100) NOT NULL,
+    description         TEXT,
+    parent_category_id  INTEGER REFERENCES categories(id),
+    color_hex           VARCHAR(7) DEFAULT '#4361ee'
 );
 
 CREATE TABLE IF NOT EXISTS suppliers (
@@ -44,13 +46,21 @@ CREATE TABLE IF NOT EXISTS customers (
 );
 
 CREATE TABLE IF NOT EXISTS products (
-    id             SERIAL PRIMARY KEY,
-    sku            VARCHAR(50) UNIQUE NOT NULL,
-    product_name   VARCHAR(150) NOT NULL,
-    category_id    INTEGER REFERENCES categories(id),
-    unit_price     NUMERIC(10, 2) NOT NULL DEFAULT 0,
-    reorder_level  INTEGER NOT NULL DEFAULT 0,
-    is_active      BOOLEAN NOT NULL DEFAULT TRUE
+    id                    SERIAL PRIMARY KEY,
+    sku                   VARCHAR(50) UNIQUE NOT NULL,
+    product_name          VARCHAR(150) NOT NULL,
+    category_id           INTEGER REFERENCES categories(id),
+    brand                 VARCHAR(100),
+    barcode               VARCHAR(64) UNIQUE,
+    description           TEXT,
+    unit_of_measure       VARCHAR(20) DEFAULT 'EA',
+    unit_price            NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    weight_kg             NUMERIC(10, 3),
+    primary_supplier_id   INTEGER REFERENCES suppliers(id),
+    reorder_level         INTEGER NOT NULL DEFAULT 0,
+    max_stock_level       INTEGER,
+    image_url             VARCHAR(500),
+    is_active             BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 CREATE TABLE IF NOT EXISTS inventory (

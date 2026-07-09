@@ -30,10 +30,15 @@ class UserSimple(BaseModel):
 class CategoryCreate(BaseModel):
     category_name: str
     description: Optional[str] = None
+    parent_category_id: Optional[int] = None
+    color_hex: Optional[str] = "#4361ee"
 
 class CategoryRead(CategoryCreate):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    parent: Optional["CategoryRead"] = None
+
+CategoryRead.model_rebuild()
 
 
 # ---- Suppliers ----
@@ -93,14 +98,23 @@ class ProductCreate(BaseModel):
     sku: str
     product_name: str
     category_id: Optional[int] = None
+    brand: Optional[str] = None
+    barcode: Optional[str] = None
+    description: Optional[str] = None
+    unit_of_measure: Optional[str] = "EA"
     unit_price: float
+    weight_kg: Optional[float] = None
+    primary_supplier_id: Optional[int] = None
     reorder_level: int = 0
+    max_stock_level: Optional[int] = None
+    image_url: Optional[str] = None
     is_active: bool = True
 
 class ProductRead(ProductCreate):
     model_config = ConfigDict(from_attributes=True)
     id: int
     category: Optional[CategoryRead] = None
+    primary_supplier: Optional[SupplierRead] = None
 
 
 # ---- Inventory ----
