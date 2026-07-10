@@ -36,7 +36,7 @@
       <div class="order-header">
         <div>
           <strong>Shipment #{{ shipment.id }}</strong>
-          {{ shipment.source_warehouse.warehouse_name }} &rarr; {{ shipment.destination_warehouse.warehouse_name }}
+          {{ shipment.source_warehouse.warehouse_name }} &rarr; {{ shipment.destination_warehouse ? shipment.destination_warehouse.warehouse_name : 'Customer' }}
           <span class="status" :class="shipment.status">{{ shipment.status }}</span>
         </div>
         <div class="actions">
