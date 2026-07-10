@@ -53,3 +53,53 @@ BEGIN
     RETURN v_shipment_id;
 END;
 $$;
+
+-- Receives a purchase order into a warehouse: upserts inventory,
+-- logs each receipt, and marks the PO as received.
+
+CREATE OR REPLACE FUNCTION sp_receive_purchase_order(
+    p_po_id INTEGER,
+    p_warehouse_id INTEGER,
+    p_performed_by INTEGER
+) RETURNS VOID
+LANGUAGE plpgsql AS $$
+DECLARE
+    v_po_status VARCHAR(20);
+    r_item      RECORD;
+    v_inv_id    INTEGER;
+BEGIN
+    SELECT status INTO v_po_status FROM purchase_orders WHERE id = p_po_id;
+
+    IF v_po_status IS NULL THEN
+        RAISE EXCEPTION 'Purchase order % not found', p_po_id;
+    END IF;
+
+    IF v_po_status = 'received' THEN
+        RAISE EXCEPTION 'Purchase order % has already been received', p_po_id;
+    END IF;
+
+    FOR r_item IN
+        SELECT product_id, quantity FROM purchase_order_items WHERE po_id = p_po_id
+    LOOP
+        SELECT id INTO v_inv_id
+        FROM inventory
+        WHERE warehouse_id = p_warehouse_id AND product_id = r_item.product_id;
+
+        IF v_inv_id IS NULL THEN
+            INSERT INTO inventory (warehouse_id, product_id, quantity_on_hand)
+            VALUES (p_warehouse_id, r_item.product_id, r_item.quantity)
+            RETURNING id INTO v_inv_id;
+        ELSE
+            UPDATE inventory
+            SET quantity_on_hand = quantity_on_hand + r_item.quantity,
+                last_updated = NOW()
+            WHERE id = v_inv_id;
+        END IF;
+
+        INSERT INTO inventory_logs (inventory_id, transaction_type, quantity_change, reference_type, reference_id, performed_by, notes)
+        VALUES (v_inv_id, 'receive', r_item.quantity, 'purchase_order', p_po_id, p_performed_by, 'Received via sp_receive_purchase_order');
+    END LOOP;
+
+    UPDATE purchase_orders SET status = 'received' WHERE id = p_po_id;
+END;
+$$;
