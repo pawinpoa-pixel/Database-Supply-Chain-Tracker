@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from database import engine, Base
+from database import engine, Base, run_migrations
 from routes import auth as auth_router
 from routes.catalog import categories_router, products_router
 from routes.partners import suppliers_router, customers_router, carriers_router
@@ -12,6 +12,7 @@ from routes.inventory_logs import router as inventory_logs_router
 import models  # noqa: F401 - ensures all models are registered on Base before create_all
 
 Base.metadata.create_all(bind=engine)
+run_migrations()
 
 app = FastAPI(title="Supply Chain Tracker API")
 
