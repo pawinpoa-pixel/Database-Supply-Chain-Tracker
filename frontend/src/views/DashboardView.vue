@@ -1,21 +1,24 @@
 <template>
   <div class="app-shell" :class="{ 'sidebar-open': sidebarOpen }">
     <aside class="sidebar">
+      <div class="sidebar-glow" />
+
       <div class="sidebar-brand">
         <span class="brand-mark">SC</span>
-        <span class="brand-name">Supply Chain Tracker</span>
+        <span class="brand-name">Supply Chain<br />Tracker</span>
       </div>
 
       <nav class="sidebar-nav">
+        <span class="nav-section-label">Menu</span>
         <button
           v-for="tab in tabs"
           :key="tab.key"
           class="nav-item"
-          :class="{ active: activeTab === tab.key }"
+          :class="{ active: activeTab === tab.key, 'nav-item-divider': tab.key === 'settings' }"
           @click="selectTab(tab.key)"
         >
-          <component :is="tab.icon" />
-          <span>{{ tab.label }}</span>
+          <span class="nav-icon"><component :is="tab.icon" /></span>
+          <span class="nav-label">{{ tab.label }}</span>
         </button>
       </nav>
     </aside>
@@ -350,7 +353,7 @@ async function handleChangePassword() {
 
 /* Sidebar */
 .sidebar {
-  width: 240px;
+  width: 252px;
   flex-shrink: 0;
   background: var(--color-sidebar-bg);
   display: flex;
@@ -359,74 +362,140 @@ async function handleChangePassword() {
   top: 0;
   height: 100vh;
   z-index: 20;
+  overflow: hidden;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
+}
+
+.sidebar-glow {
+  position: absolute;
+  top: -120px;
+  left: -80px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(79, 209, 193, 0.22), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 .sidebar-brand {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  padding: 1.3rem 1.25rem;
-  border-bottom: 1px solid var(--color-sidebar-border);
+  gap: 0.75rem;
+  padding: 1.5rem 1.35rem;
+  margin-bottom: 0.25rem;
 }
 
 .brand-mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: var(--color-sidebar-brand);
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--color-sidebar-brand), #2fa8a0);
   color: #06231f;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   flex-shrink: 0;
+  box-shadow: 0 6px 16px rgba(79, 209, 193, 0.35);
 }
 
 .brand-name {
   color: var(--color-sidebar-text-active);
   font-weight: 700;
-  font-size: 0.95rem;
-  line-height: 1.2;
+  font-size: 0.93rem;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
 }
 
 .sidebar-nav {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  padding: 0.75rem;
-  gap: 0.15rem;
+  padding: 0.5rem 0.9rem 1rem;
+  gap: 0.2rem;
   overflow-y: auto;
+}
+
+.nav-section-label {
+  color: var(--color-sidebar-text);
+  opacity: 0.55;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  padding: 0.5rem 0.6rem 0.4rem;
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.65rem 0.85rem;
+  gap: 0.7rem;
+  padding: 0.6rem 0.7rem;
   border: none;
-  border-left: 3px solid transparent;
-  border-radius: 8px;
+  border-radius: 10px;
   background: none;
   color: var(--color-sidebar-text);
-  font-size: 0.88rem;
+  font-size: 0.87rem;
   font-weight: 600;
   cursor: pointer;
   text-align: left;
+  transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
 
-.nav-item svg {
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-sidebar-text);
   flex-shrink: 0;
+  transition: background-color 0.18s ease, color 0.18s ease;
 }
 
 .nav-item:hover {
   background: var(--color-sidebar-hover-bg);
   color: var(--color-sidebar-text-active);
+  transform: translateX(2px);
+}
+
+.nav-item:hover .nav-icon {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-sidebar-text-active);
 }
 
 .nav-item.active {
-  background: var(--color-sidebar-active-bg);
+  background: linear-gradient(135deg, rgba(79, 209, 193, 0.18), rgba(67, 97, 238, 0.16));
   color: var(--color-sidebar-text-active);
-  border-left-color: var(--color-sidebar-accent);
+  box-shadow: inset 0 0 0 1px rgba(79, 209, 193, 0.25), 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.nav-item.active .nav-icon {
+  background: linear-gradient(135deg, var(--color-sidebar-brand), var(--color-sidebar-accent));
+  color: #06231f;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+}
+
+.nav-item-divider {
+  margin-top: 0.6rem;
+  padding-top: 0.9rem;
+  position: relative;
+}
+
+.nav-item-divider::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0.6rem;
+  right: 0.6rem;
+  height: 1px;
+  background: var(--color-sidebar-border);
 }
 
 .sidebar-scrim {
