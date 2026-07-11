@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS categories (
     id                  SERIAL PRIMARY KEY,
+    user_id             INTEGER NOT NULL REFERENCES users(id),
     category_name       VARCHAR(100) NOT NULL,
     description         TEXT,
     parent_category_id  INTEGER REFERENCES categories(id),
@@ -16,6 +17,7 @@ CREATE TABLE IF NOT EXISTS categories (
 
 CREATE TABLE IF NOT EXISTS suppliers (
     id           SERIAL PRIMARY KEY,
+    user_id      INTEGER NOT NULL REFERENCES users(id),
     company_name VARCHAR(150) NOT NULL,
     contact_name VARCHAR(100),
     email        VARCHAR(100),
@@ -25,6 +27,7 @@ CREATE TABLE IF NOT EXISTS suppliers (
 
 CREATE TABLE IF NOT EXISTS warehouses (
     id             SERIAL PRIMARY KEY,
+    user_id        INTEGER NOT NULL REFERENCES users(id),
     warehouse_name VARCHAR(150) NOT NULL,
     address        TEXT,
     capacity       INTEGER
@@ -32,6 +35,7 @@ CREATE TABLE IF NOT EXISTS warehouses (
 
 CREATE TABLE IF NOT EXISTS carriers (
     id           SERIAL PRIMARY KEY,
+    user_id      INTEGER NOT NULL REFERENCES users(id),
     carrier_name VARCHAR(150) NOT NULL,
     phone        VARCHAR(30),
     email        VARCHAR(100)
@@ -39,6 +43,7 @@ CREATE TABLE IF NOT EXISTS carriers (
 
 CREATE TABLE IF NOT EXISTS customers (
     id            SERIAL PRIMARY KEY,
+    user_id       INTEGER NOT NULL REFERENCES users(id),
     customer_name VARCHAR(150) NOT NULL,
     email         VARCHAR(100),
     phone         VARCHAR(30),
@@ -47,11 +52,12 @@ CREATE TABLE IF NOT EXISTS customers (
 
 CREATE TABLE IF NOT EXISTS products (
     id                    SERIAL PRIMARY KEY,
-    sku                   VARCHAR(50) UNIQUE NOT NULL,
+    user_id               INTEGER NOT NULL REFERENCES users(id),
+    sku                   VARCHAR(50) NOT NULL,
     product_name          VARCHAR(150) NOT NULL,
     category_id           INTEGER REFERENCES categories(id),
     brand                 VARCHAR(100),
-    barcode               VARCHAR(64) UNIQUE,
+    barcode               VARCHAR(64),
     description           TEXT,
     unit_of_measure       VARCHAR(20) DEFAULT 'EA',
     unit_price            NUMERIC(10, 2) NOT NULL DEFAULT 0,
@@ -60,7 +66,9 @@ CREATE TABLE IF NOT EXISTS products (
     reorder_level         INTEGER NOT NULL DEFAULT 0,
     max_stock_level       INTEGER,
     image_url             VARCHAR(500),
-    is_active             BOOLEAN NOT NULL DEFAULT TRUE
+    is_active             BOOLEAN NOT NULL DEFAULT TRUE,
+    UNIQUE (user_id, sku),
+    UNIQUE (user_id, barcode)
 );
 
 CREATE TABLE IF NOT EXISTS inventory (

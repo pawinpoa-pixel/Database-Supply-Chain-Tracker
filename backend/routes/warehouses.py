@@ -10,14 +10,45 @@ warehouses_router = APIRouter(prefix="/warehouses", tags=["warehouses"])
 inventory_router = APIRouter(prefix="/inventory", tags=["inventory"])
 
 
+def _get_owned_warehouse_or_404(db: Session, warehouse_id: int, user_id: int) -> models.Warehouse:
+    warehouse = (
+        db.query(models.Warehouse)
+        .filter(models.Warehouse.id == warehouse_id, models.Warehouse.user_id == user_id)
+        .first()
+    )
+    if not warehouse:
+        raise HTTPException(status_code=404, detail="Warehouse not found")
+    return warehouse
+
+
+def _get_owned_product_or_404(db: Session, product_id: int, user_id: int) -> models.Product:
+    product = (
+        db.query(models.Product)
+        .filter(models.Product.id == product_id, models.Product.user_id == user_id)
+        .first()
+    )
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
+
+
 @warehouses_router.get("", response_model=list[schemas.WarehouseRead])
-def list_warehouses(db: Session = Depends(get_db), _=Depends(get_current_user)):
-    return db.query(models.Warehouse).order_by(models.Warehouse.id).all()
+def list_warehouses(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    return (
+        db.query(models.Warehouse)
+        .filter(models.Warehouse.user_id == current_user.id)
+        .order_by(models.Warehouse.id)
+        .all()
+    )
 
 
 @warehouses_router.post("", response_model=schemas.WarehouseRead, status_code=status.HTTP_201_CREATED)
-def create_warehouse(body: schemas.WarehouseCreate, db: Session = Depends(get_db), _=Depends(get_current_user)):
-    warehouse = models.Warehouse(**body.model_dump())
+def create_warehouse(
+    body: schemas.WarehouseCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    warehouse = models.Warehouse(**body.model_dump(), user_id=current_user.id)
     db.add(warehouse)
     db.commit()
     db.refresh(warehouse)
@@ -29,11 +60,9 @@ def update_warehouse(
     warehouse_id: int,
     body: schemas.WarehouseCreate,
     db: Session = Depends(get_db),
-    _=Depends(get_current_user),
+    current_user: models.User = Depends(get_current_user),
 ):
-    warehouse = db.get(models.Warehouse, warehouse_id)
-    if not warehouse:
-        raise HTTPException(status_code=404, detail="Warehouse not found")
+    warehouse = _get_owned_warehouse_or_404(db, warehouse_id, current_user.id)
     for key, value in body.model_dump().items():
         setattr(warehouse, key, value)
     db.commit()
@@ -42,31 +71,47 @@ def update_warehouse(
 
 
 @warehouses_router.delete("/{warehouse_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_warehouse(warehouse_id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
-    warehouse = db.get(models.Warehouse, warehouse_id)
-    if not warehouse:
-        raise HTTPException(status_code=404, detail="Warehouse not found")
+def delete_warehouse(
+    warehouse_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    warehouse = _get_owned_warehouse_or_404(db, warehouse_id, current_user.id)
     db.delete(warehouse)
     db.commit()
 
 
 @inventory_router.get("/low-stock", response_model=list[schemas.InventoryRead])
-def low_stock(db: Session = Depends(get_db), _=Depends(get_current_user)):
+def low_stock(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
     return (
         db.query(models.Inventory)
+        .join(models.Warehouse, models.Inventory.warehouse_id == models.Warehouse.id)
         .join(models.Product, models.Inventory.product_id == models.Product.id)
+        .filter(models.Warehouse.user_id == current_user.id)
         .filter(models.Inventory.quantity_on_hand <= models.Product.reorder_level)
         .all()
     )
 
 
 @inventory_router.get("", response_model=list[schemas.InventoryRead])
-def list_inventory(db: Session = Depends(get_db), _=Depends(get_current_user)):
-    return db.query(models.Inventory).order_by(models.Inventory.id).all()
+def list_inventory(db: Session = Depends(get_db), current_user: models.User = Depends(get_current_user)):
+    return (
+        db.query(models.Inventory)
+        .join(models.Warehouse, models.Inventory.warehouse_id == models.Warehouse.id)
+        .filter(models.Warehouse.user_id == current_user.id)
+        .order_by(models.Inventory.id)
+        .all()
+    )
 
 
 @inventory_router.post("", response_model=schemas.InventoryRead, status_code=status.HTTP_201_CREATED)
-def create_inventory(body: schemas.InventoryCreate, db: Session = Depends(get_db), _=Depends(get_current_user)):
+def create_inventory(
+    body: schemas.InventoryCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    _get_owned_warehouse_or_404(db, body.warehouse_id, current_user.id)
+    _get_owned_product_or_404(db, body.product_id, current_user.id)
     existing = (
         db.query(models.Inventory)
         .filter(
@@ -91,7 +136,7 @@ def create_inventory(body: schemas.InventoryCreate, db: Session = Depends(get_db
                 quantity_change=inventory.quantity_on_hand,
                 reference_type=None,
                 reference_id=None,
-                performed_by=None,
+                performed_by=current_user.id,
             )
         )
     db.commit()
@@ -104,11 +149,18 @@ def update_inventory(
     inventory_id: int,
     body: schemas.InventoryCreate,
     db: Session = Depends(get_db),
-    _=Depends(get_current_user),
+    current_user: models.User = Depends(get_current_user),
 ):
-    inventory = db.get(models.Inventory, inventory_id)
+    inventory = (
+        db.query(models.Inventory)
+        .join(models.Warehouse, models.Inventory.warehouse_id == models.Warehouse.id)
+        .filter(models.Inventory.id == inventory_id, models.Warehouse.user_id == current_user.id)
+        .first()
+    )
     if not inventory:
         raise HTTPException(status_code=404, detail="Inventory row not found")
+    _get_owned_warehouse_or_404(db, body.warehouse_id, current_user.id)
+    _get_owned_product_or_404(db, body.product_id, current_user.id)
     delta = body.quantity_on_hand - inventory.quantity_on_hand
     inventory.warehouse_id = body.warehouse_id
     inventory.product_id = body.product_id
@@ -121,7 +173,7 @@ def update_inventory(
                 quantity_change=delta,
                 reference_type=None,
                 reference_id=None,
-                performed_by=None,
+                performed_by=current_user.id,
             )
         )
     db.commit()
@@ -130,8 +182,17 @@ def update_inventory(
 
 
 @inventory_router.delete("/{inventory_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_inventory(inventory_id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
-    inventory = db.get(models.Inventory, inventory_id)
+def delete_inventory(
+    inventory_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    inventory = (
+        db.query(models.Inventory)
+        .join(models.Warehouse, models.Inventory.warehouse_id == models.Warehouse.id)
+        .filter(models.Inventory.id == inventory_id, models.Warehouse.user_id == current_user.id)
+        .first()
+    )
     if not inventory:
         raise HTTPException(status_code=404, detail="Inventory row not found")
     db.delete(inventory)

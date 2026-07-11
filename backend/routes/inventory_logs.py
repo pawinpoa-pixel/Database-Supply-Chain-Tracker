@@ -16,9 +16,9 @@ def list_inventory_logs(
     inventory_id: Optional[int] = None,
     reference_type: Optional[str] = None,
     db: Session = Depends(get_db),
-    _=Depends(get_current_user),
+    current_user: models.User = Depends(get_current_user),
 ):
-    query = db.query(models.InventoryLog)
+    query = db.query(models.InventoryLog).filter(models.InventoryLog.performed_by == current_user.id)
     if inventory_id is not None:
         query = query.filter(models.InventoryLog.inventory_id == inventory_id)
     if reference_type is not None:

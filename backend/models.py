@@ -29,6 +29,7 @@ class Category(Base):
     __tablename__ = "categories"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     category_name = Column(String(100), nullable=False)
     description = Column(Text, nullable=True)
     parent_category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
@@ -43,6 +44,7 @@ class Supplier(Base):
     __tablename__ = "suppliers"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     company_name = Column(String(150), nullable=False)
     contact_name = Column(String(100), nullable=True)
     email = Column(String(100), nullable=True)
@@ -56,6 +58,7 @@ class Warehouse(Base):
     __tablename__ = "warehouses"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     warehouse_name = Column(String(150), nullable=False)
     address = Column(Text, nullable=True)
     capacity = Column(Integer, nullable=True)
@@ -67,6 +70,7 @@ class Carrier(Base):
     __tablename__ = "carriers"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     carrier_name = Column(String(150), nullable=False)
     phone = Column(String(30), nullable=True)
     email = Column(String(100), nullable=True)
@@ -78,6 +82,7 @@ class Customer(Base):
     __tablename__ = "customers"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     customer_name = Column(String(150), nullable=False)
     email = Column(String(100), nullable=True)
     phone = Column(String(30), nullable=True)
@@ -88,13 +93,18 @@ class Customer(Base):
 
 class Product(Base):
     __tablename__ = "products"
+    __table_args__ = (
+        UniqueConstraint("user_id", "sku", name="uq_products_user_sku"),
+        UniqueConstraint("user_id", "barcode", name="uq_products_user_barcode"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
-    sku = Column(String(50), unique=True, nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    sku = Column(String(50), nullable=False, index=True)
     product_name = Column(String(150), nullable=False)
     category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
     brand = Column(String(100), nullable=True)
-    barcode = Column(String(64), unique=True, nullable=True)
+    barcode = Column(String(64), nullable=True)
     description = Column(Text, nullable=True)
     unit_of_measure = Column(String(20), nullable=True, default="EA")
     unit_price = Column(Numeric(10, 2), nullable=False, default=0)
