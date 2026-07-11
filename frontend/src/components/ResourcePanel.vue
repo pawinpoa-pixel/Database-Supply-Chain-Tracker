@@ -165,6 +165,7 @@ const props = defineProps({
   createFn: { type: Function, required: true },
   removeFn: { type: Function, required: true },
   updateFn: { type: Function, default: null },
+  filter: { type: Function, default: null },
 })
 
 const PAGE_SIZE = 8
@@ -254,7 +255,8 @@ watch(totalPages, (max) => {
 })
 
 async function loadRows() {
-  rows.value = await props.listFn()
+  const all = await props.listFn()
+  rows.value = props.filter ? all.filter(props.filter) : all
 }
 
 async function loadOptions() {

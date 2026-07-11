@@ -65,12 +65,22 @@
       <main class="content-area">
         <div v-if="activeTab === 'catalog'" class="content-stack">
           <ResourcePanel
-            title="Categories"
-            :fields="categoryFields"
+            title="Parent Categories"
+            :fields="parentCategoryFields"
             :list-fn="categories.list"
             :create-fn="categories.create"
             :update-fn="categories.update"
             :remove-fn="categories.remove"
+            :filter="isParentCategory"
+          />
+          <ResourcePanel
+            title="Subcategories"
+            :fields="subcategoryFields"
+            :list-fn="categories.list"
+            :create-fn="categories.create"
+            :update-fn="categories.update"
+            :remove-fn="categories.remove"
+            :filter="isSubcategory"
           />
           <ResourcePanel
             title="Products"
@@ -216,14 +226,32 @@ function goToSettings() {
   selectTab('settings')
 }
 
-const categoryFields = [
+function isParentCategory(row) {
+  return !row.parent_category_id
+}
+
+function isSubcategory(row) {
+  return !!row.parent_category_id
+}
+
+const parentCategoryFields = [
+  { key: 'category_name', label: 'Name', type: 'text', required: true },
+  { key: 'description', label: 'Description', type: 'text', hideInTable: true },
+  { key: 'color_hex', label: 'Color', type: 'color', default: '#4361ee' },
+]
+
+const subcategoryFields = [
   { key: 'category_name', label: 'Name', type: 'text', required: true },
   { key: 'description', label: 'Description', type: 'text', hideInTable: true },
   {
     key: 'parent_category_id',
     label: 'Parent category',
     type: 'select',
-    optionsSource: () => categories.list().then((list) => list.map((c) => ({ value: c.id, label: c.category_name }))),
+    required: true,
+    optionsSource: () =>
+      categories.list().then((list) =>
+        list.filter(isParentCategory).map((c) => ({ value: c.id, label: c.category_name }))
+      ),
     display: (row) => row.parent?.category_name ?? '—',
   },
   { key: 'color_hex', label: 'Color', type: 'color', default: '#4361ee' },
