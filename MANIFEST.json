@@ -1,0 +1,35 @@
+{
+  "files": [
+    "DEPLOYMENT_INSTRUCTIONS.md",
+    "Dockerfile.render",
+    "RENDER_DEPLOYMENT_REPORT.md",
+    "backend/render_start.py",
+    "render.yaml",
+    "render/nginx.conf.template",
+    "render/start.sh",
+    "sql/render_seed.sql",
+    "sql/verify_database.sql"
+  ],
+  "expected_seed_counts": {
+    "users": 10,
+    "categories": 10,
+    "suppliers": 10,
+    "warehouses": 10,
+    "carriers": 10,
+    "customers": 10,
+    "products": 12,
+    "inventory": 16,
+    "purchase_orders": 10,
+    "purchase_order_items": 15,
+    "orders": 10,
+    "order_items": 16,
+    "shipments": 10,
+    "shipment_items": 13,
+    "inventory_logs": 16,
+    "shipment_status_history": 18
+  },
+  "notes": [
+    "Actual Render-generated URL and database password are intentionally placeholders.",
+    "Do not commit a completed report containing production credentials."
+  ]
+}
