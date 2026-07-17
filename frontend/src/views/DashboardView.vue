@@ -143,6 +143,11 @@
           <ShipmentsPanel />
         </div>
 
+        <div v-if="activeTab === 'standing-orders'" class="content-stack">
+          <StandingOrdersPanel />
+          <InvoicesPanel />
+        </div>
+
         <div v-if="activeTab === 'settings'" class="content-stack">
           <section class="card settings-card">
             <h2>Change Password</h2>
@@ -184,6 +189,8 @@ import InventoryPanel from '../components/InventoryPanel.vue'
 import PurchaseOrdersPanel from '../components/PurchaseOrdersPanel.vue'
 import OrdersPanel from '../components/OrdersPanel.vue'
 import ShipmentsPanel from '../components/ShipmentsPanel.vue'
+import StandingOrdersPanel from '../components/StandingOrdersPanel.vue'
+import InvoicesPanel from '../components/InvoicesPanel.vue'
 import DarkModeToggle from '../components/DarkModeToggle.vue'
 import IconHome from '../components/icons/IconHome.vue'
 import IconGrid from '../components/icons/IconGrid.vue'
@@ -192,6 +199,7 @@ import IconWarehouse from '../components/icons/IconWarehouse.vue'
 import IconClipboard from '../components/icons/IconClipboard.vue'
 import IconPackage from '../components/icons/IconPackage.vue'
 import IconTruck from '../components/icons/IconTruck.vue'
+import IconRepeat from '../components/icons/IconRepeat.vue'
 import IconSettings from '../components/icons/IconSettings.vue'
 import IconLogout from '../components/icons/IconLogout.vue'
 import IconChevronDown from '../components/icons/IconChevronDown.vue'
@@ -207,6 +215,7 @@ const tabs = [
   { key: 'purchase-orders', label: 'Purchase Orders', icon: IconClipboard },
   { key: 'orders', label: 'Orders', icon: IconPackage },
   { key: 'shipments', label: 'Shipments', icon: IconTruck },
+  { key: 'standing-orders', label: 'Standing Orders', icon: IconRepeat },
   { key: 'settings', label: 'Settings', icon: IconSettings },
 ]
 const activeTab = ref('catalog')

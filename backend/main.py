@@ -9,6 +9,8 @@ from routes.purchase_orders import router as purchase_orders_router
 from routes.orders import router as orders_router
 from routes.shipments import router as shipments_router
 from routes.inventory_logs import router as inventory_logs_router
+from routes.standing_orders import router as standing_orders_router
+from routes.invoices import router as invoices_router
 import models  # noqa: F401 - ensures all models are registered on Base before create_all
 
 Base.metadata.create_all(bind=engine)
@@ -36,6 +38,8 @@ app.include_router(purchase_orders_router)
 app.include_router(orders_router)
 app.include_router(shipments_router)
 app.include_router(inventory_logs_router)
+app.include_router(standing_orders_router)
+app.include_router(invoices_router)
 
 
 @app.get("/")

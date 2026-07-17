@@ -197,6 +197,8 @@ class OrderRead(BaseModel):
     order_date: Optional[datetime] = None
     status: str
     total_amount: float
+    standing_order_id: Optional[int] = None
+    invoice_id: Optional[int] = None
     customer: CustomerRead
     items: list[OrderItemRead] = []
 
@@ -204,6 +206,77 @@ class ShipOrderRequest(BaseModel):
     source_warehouse_id: int
     carrier_id: Optional[int] = None
     tracking_number: Optional[str] = None
+
+
+# ---- Standing orders (recurring deliveries billed on a separate cadence) ----
+
+class StandingOrderItemCreate(BaseModel):
+    product_id: int
+    quantity_per_delivery: int
+    unit_price: float
+
+class StandingOrderItemRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    standing_order_id: int
+    product_id: int
+    quantity_per_delivery: int
+    unit_price: float
+    product: ProductRead
+
+class StandingOrderCreate(BaseModel):
+    customer_id: int
+    delivery_frequency_days: int
+    billing_frequency_days: int
+    start_date: date
+    items: list[StandingOrderItemCreate] = []
+
+class StandingOrderUpdate(BaseModel):
+    status: Optional[str] = None
+    delivery_frequency_days: Optional[int] = None
+    billing_frequency_days: Optional[int] = None
+
+class StandingOrderRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    customer_id: int
+    status: str
+    delivery_frequency_days: int
+    billing_frequency_days: int
+    start_date: date
+    next_delivery_date: date
+    next_billing_date: date
+    created_at: Optional[datetime] = None
+    customer: CustomerRead
+    items: list[StandingOrderItemRead] = []
+
+
+# ---- Invoices (who: customer, what: itemized products, how much: total) ----
+
+class InvoiceItemRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    invoice_id: int
+    product_id: int
+    quantity: int
+    unit_price: float
+    product: ProductRead
+
+class InvoiceRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    standing_order_id: int
+    customer_id: int
+    billing_period_start: date
+    billing_period_end: date
+    issue_date: Optional[date] = None
+    due_date: date
+    status: str
+    total_amount: float
+    paid_at: Optional[datetime] = None
+    customer: CustomerRead
+    items: list[InvoiceItemRead] = []
+    orders: list[OrderRead] = []
 
 # ---- Shipments ----
 

@@ -96,12 +96,52 @@ CREATE TABLE IF NOT EXISTS purchase_order_items (
     unit_cost   NUMERIC(10, 2) NOT NULL
 );
 
+-- A standing order is a customer's standing arrangement for periodic
+-- deliveries against one agreement (a.k.a. blanket order) -- it
+-- auto-generates real rows in orders/order_items (tagged via
+-- orders.standing_order_id) on its own delivery cadence, while
+-- invoices bill for whichever of those orders aren't billed yet
+-- (orders.invoice_id IS NULL) on a separate billing cadence -- e.g.
+-- deliver weekly, bill monthly. Invoices record who (customer_id) and
+-- what (invoice_items, itemized by product) is being billed.
+
+CREATE TABLE IF NOT EXISTS standing_orders (
+    id                        SERIAL PRIMARY KEY,
+    user_id                   INTEGER NOT NULL REFERENCES users(id),
+    customer_id               INTEGER NOT NULL REFERENCES customers(id),
+    status                    VARCHAR(20) NOT NULL DEFAULT 'active',
+    delivery_frequency_days   INTEGER NOT NULL,
+    billing_frequency_days    INTEGER NOT NULL,
+    start_date                DATE NOT NULL,
+    next_delivery_date        DATE NOT NULL,
+    next_billing_date         DATE NOT NULL,
+    created_at                TIMESTAMPTZ DEFAULT NOW(),
+    CHECK (status IN ('active', 'paused', 'cancelled'))
+);
+
+CREATE TABLE IF NOT EXISTS invoices (
+    id                     SERIAL PRIMARY KEY,
+    user_id                INTEGER NOT NULL REFERENCES users(id),
+    standing_order_id      INTEGER NOT NULL REFERENCES standing_orders(id),
+    customer_id            INTEGER NOT NULL REFERENCES customers(id),
+    billing_period_start   DATE NOT NULL,
+    billing_period_end     DATE NOT NULL,
+    issue_date             DATE NOT NULL DEFAULT CURRENT_DATE,
+    due_date               DATE NOT NULL,
+    status                 VARCHAR(20) NOT NULL DEFAULT 'pending',
+    total_amount           NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    paid_at                TIMESTAMPTZ,
+    CHECK (status IN ('pending', 'paid', 'overdue', 'cancelled'))
+);
+
 CREATE TABLE IF NOT EXISTS orders (
-    id            SERIAL PRIMARY KEY,
-    customer_id   INTEGER NOT NULL REFERENCES customers(id),
-    order_date    TIMESTAMPTZ DEFAULT NOW(),
-    status        VARCHAR(20) NOT NULL DEFAULT 'pending',
-    total_amount  NUMERIC(10, 2) NOT NULL DEFAULT 0
+    id                 SERIAL PRIMARY KEY,
+    customer_id        INTEGER NOT NULL REFERENCES customers(id),
+    order_date         TIMESTAMPTZ DEFAULT NOW(),
+    status             VARCHAR(20) NOT NULL DEFAULT 'pending',
+    total_amount       NUMERIC(10, 2) NOT NULL DEFAULT 0,
+    standing_order_id  INTEGER REFERENCES standing_orders(id),
+    invoice_id         INTEGER REFERENCES invoices(id)
 );
 
 CREATE TABLE IF NOT EXISTS order_items (
@@ -110,6 +150,22 @@ CREATE TABLE IF NOT EXISTS order_items (
     product_id     INTEGER NOT NULL REFERENCES products(id),
     quantity       INTEGER NOT NULL,
     selling_price  NUMERIC(10, 2) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS standing_order_items (
+    id                      SERIAL PRIMARY KEY,
+    standing_order_id       INTEGER NOT NULL REFERENCES standing_orders(id),
+    product_id              INTEGER NOT NULL REFERENCES products(id),
+    quantity_per_delivery   INTEGER NOT NULL,
+    unit_price              NUMERIC(10, 2) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS invoice_items (
+    id          SERIAL PRIMARY KEY,
+    invoice_id  INTEGER NOT NULL REFERENCES invoices(id),
+    product_id  INTEGER NOT NULL REFERENCES products(id),
+    quantity    INTEGER NOT NULL,
+    unit_price  NUMERIC(10, 2) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS shipments (

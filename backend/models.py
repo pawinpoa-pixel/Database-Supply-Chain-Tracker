@@ -168,10 +168,14 @@ class Order(Base):
     order_date = Column(DateTime(timezone=True), server_default=func.now())
     status = Column(String(20), nullable=False, default="pending")
     total_amount = Column(Numeric(10, 2), nullable=False, default=0)
+    standing_order_id = Column(Integer, ForeignKey("standing_orders.id"), nullable=True)
+    invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=True)
 
     customer = relationship("Customer", back_populates="orders")
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
     shipments = relationship("Shipment", back_populates="order")
+    standing_order = relationship("StandingOrder", back_populates="orders")
+    invoice = relationship("Invoice", back_populates="orders")
 
 
 class OrderItem(Base):
@@ -184,6 +188,97 @@ class OrderItem(Base):
     selling_price = Column(Numeric(10, 2), nullable=False)
 
     order = relationship("Order", back_populates="items")
+    product = relationship("Product")
+
+
+class StandingOrder(Base):
+    """
+    A customer's standing arrangement for periodic deliveries against
+    one agreement (e.g. "1 case of milk every week for a year"), with
+    delivery and billing on independent cadences -- standard
+    procurement/ERP terminology (also called a blanket order).
+
+    Each delivery cycle auto-generates a real Order/OrderItem row (see
+    Order.standing_order_id) -- it goes through the exact same
+    fulfillment/shipping path as any one-off order. Billing is handled
+    separately by Invoice, which is what lets "deliver weekly, bill
+    monthly" work.
+    """
+
+    __tablename__ = "standing_orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    customer_id = Column(Integer, ForeignKey("customers.id"), nullable=False)
+    status = Column(String(20), nullable=False, default="active")  # active | paused | cancelled
+    delivery_frequency_days = Column(Integer, nullable=False)
+    billing_frequency_days = Column(Integer, nullable=False)
+    start_date = Column(Date, nullable=False)
+    next_delivery_date = Column(Date, nullable=False)
+    next_billing_date = Column(Date, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    customer = relationship("Customer")
+    items = relationship("StandingOrderItem", back_populates="standing_order", cascade="all, delete-orphan")
+    orders = relationship("Order", back_populates="standing_order")
+    invoices = relationship("Invoice", back_populates="standing_order")
+
+
+class StandingOrderItem(Base):
+    __tablename__ = "standing_order_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    standing_order_id = Column(Integer, ForeignKey("standing_orders.id"), nullable=False)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    quantity_per_delivery = Column(Integer, nullable=False)
+    unit_price = Column(Numeric(10, 2), nullable=False)
+
+    standing_order = relationship("StandingOrder", back_populates="items")
+    product = relationship("Product")
+
+
+class Invoice(Base):
+    """
+    A bill: who owes it (customer), what it's for (items, itemized by
+    product), and how much (total_amount). Covers one billing period of
+    one standing order, aggregating whichever of that standing order's
+    generated orders haven't been billed yet (order.invoice_id gets set
+    once they're billed) -- this is the piece that lets delivery cadence
+    and billing cadence differ.
+    """
+
+    __tablename__ = "invoices"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    standing_order_id = Column(Integer, ForeignKey("standing_orders.id"), nullable=False)
+    customer_id = Column(Integer, ForeignKey("customers.id"), nullable=False)
+    billing_period_start = Column(Date, nullable=False)
+    billing_period_end = Column(Date, nullable=False)
+    issue_date = Column(Date, nullable=False, server_default=func.current_date())
+    due_date = Column(Date, nullable=False)
+    status = Column(String(20), nullable=False, default="pending")  # pending | paid | overdue | cancelled
+    total_amount = Column(Numeric(10, 2), nullable=False, default=0)
+    paid_at = Column(DateTime(timezone=True), nullable=True)
+
+    standing_order = relationship("StandingOrder", back_populates="invoices")
+    customer = relationship("Customer")
+    orders = relationship("Order", back_populates="invoice")
+    items = relationship("InvoiceItem", back_populates="invoice", cascade="all, delete-orphan")
+
+
+class InvoiceItem(Base):
+    """The itemized 'what' on an invoice -- one row per product being billed."""
+
+    __tablename__ = "invoice_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=False)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    quantity = Column(Integer, nullable=False)
+    unit_price = Column(Numeric(10, 2), nullable=False)
+
+    invoice = relationship("Invoice", back_populates="items")
     product = relationship("Product")
 
 
